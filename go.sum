@@ -1,0 +1,8 @@
+github.com/Auto-CQUPT-Plan/CQUPT-Sports-SDK v1.0.0 h1:dP+8EMvb4TrqYC6yIAloclHryoIs/kfPXBe0egXZYIk=
+github.com/Auto-CQUPT-Plan/CQUPT-Sports-SDK v1.0.0/go.mod h1:ZF7kUE+oTrg1gQHVwa+AVt1kjlFT/8L0M0A/MCyS5Sc=
+github.com/cdwiegand/persistent-cookiejar v0.6.0 h1:S88/CALS/LOuMC28hwU2vT+Uj81fhUVKb1zASACxNek=
+github.com/cdwiegand/persistent-cookiejar v0.6.0/go.mod h1:UuWaWg9whX5yiPUlofuXLZ4El69SorTrhWnGrg+MyQM=
+github.com/rogpeppe/go-internal v1.13.1 h1:KvO1DLK/DRN07sQ1LQKScxyZJuNnedQ5/wKSR38lUII=
+github.com/rogpeppe/go-internal v1.13.1/go.mod h1:uMEvuHeurkdAXX61udpOXGD/AzZDWNMNyH2VO9fmH0o=
+golang.org/x/net v0.34.0 h1:Mb7Mrk043xzHgnRM88suvJFwzVrRfHEHJEl5/71CKw0=
+golang.org/x/net v0.34.0/go.mod h1:di0qlW3YNM5oh6GqDGQr92MyTozJPmybPK4Ev/Gm31k=
