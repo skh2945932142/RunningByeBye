@@ -10,12 +10,12 @@ import (
 )
 
 type Scheduler struct {
-	reliance   SchedulerReliance
-	tasks      map[string]*models.TaskNode
-	mu         sync.Mutex
-	eventCh    chan models.ProgressEvent
-	stopCh     chan struct{}
-	stopOnce   sync.Once
+	reliance SchedulerReliance
+	tasks    map[string]*models.TaskNode
+	mu       sync.Mutex
+	eventCh  chan models.ProgressEvent
+	stopCh   chan struct{}
+	stopOnce sync.Once
 }
 
 func NewScheduler(reliance SchedulerReliance) *Scheduler {
@@ -52,14 +52,32 @@ func (sch *Scheduler) AddTask(task *models.TaskNode) error {
 
 func (sch *Scheduler) RemoveTask(openID string) {
 	sch.mu.Lock()
-	defer sch.mu.Unlock()
-
-	if task, ok := sch.tasks[openID]; ok {
-		task.State = models.TaskStateCompleted
-		sch.reliance.Service.GetSessionStore().Delete(openID)
-		delete(sch.tasks, openID)
-		sch.reliance.Logger.Info("Task removed for user %s", openID)
+	task, ok := sch.tasks[openID]
+	if !ok {
+		sch.mu.Unlock()
+		return
 	}
+	recordNo := task.RecordNo
+	submitted := task.SubmittedCount
+	totalPoints := len(task.LocationPoints)
+	mileage := task.Mileage
+	task.State = models.TaskStateCompleted
+	delete(sch.tasks, openID)
+	sch.mu.Unlock()
+
+	if recordNo != "" {
+		sch.reliance.Service.FinishRunning(openID, recordNo)
+	}
+	sch.reliance.Service.GetSessionStore().Delete(openID)
+	sch.eventCh <- models.ProgressEvent{
+		OpenID:         openID,
+		RecordNo:       recordNo,
+		SubmittedCount: submitted,
+		TotalPoints:    totalPoints,
+		Mileage:        mileage,
+		State:          "completed",
+	}
+	sch.reliance.Logger.Info("Task removed for user %s", openID)
 }
 
 func (sch *Scheduler) PauseTask(openID string) {
