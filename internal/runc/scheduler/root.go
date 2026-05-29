@@ -1,14 +1,11 @@
 package scheduler
 
 import (
-	"RunningByeBye/internal/runc/models"
-	"sync"
+	"RunningByeBye/internal/runc/pkg"
+	"RunningByeBye/internal/runc/service"
 )
 
-type SchedulerDependence struct {
-}
-
-type Scheduler struct {
-	Tasks map[string]models.TaskNode
-	mu    sync.Mutex
+type SchedulerReliance struct {
+	Service *service.Service
+	Logger  *pkg.Logger
 }
