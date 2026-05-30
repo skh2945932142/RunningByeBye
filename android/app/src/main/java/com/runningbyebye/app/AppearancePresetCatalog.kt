@@ -3,7 +3,6 @@ package com.runningbyebye.app
 data class AppearancePreset(
     val id: String,
     val title: String,
-    val subtitle: String,
     val backgroundStart: Int,
     val backgroundEnd: Int,
     val glowStart: Int,
@@ -17,7 +16,6 @@ object AppearancePresetCatalog {
         AppearancePreset(
             id = "aurora",
             title = "极光",
-            subtitle = "深海青蓝 · 冰蓝光晕",
             backgroundStart = 0xFF07111B.toInt(),
             backgroundEnd = 0xFF0D2733.toInt(),
             glowStart = 0xFF77D3FF.toInt(),
@@ -28,7 +26,6 @@ object AppearancePresetCatalog {
         AppearancePreset(
             id = "midnight",
             title = "深夜",
-            subtitle = "炭黑 · 青绿高光",
             backgroundStart = 0xFF091017.toInt(),
             backgroundEnd = 0xFF132029.toInt(),
             glowStart = 0xFF55D3C0.toInt(),
@@ -39,7 +36,6 @@ object AppearancePresetCatalog {
         AppearancePreset(
             id = "glacier",
             title = "冰川",
-            subtitle = "浅冰蓝 · 银白雾面",
             backgroundStart = 0xFFEAF4FB.toInt(),
             backgroundEnd = 0xFFC6D9E8.toInt(),
             glowStart = 0xFF77BEEA.toInt(),
@@ -50,7 +46,6 @@ object AppearancePresetCatalog {
         AppearancePreset(
             id = "graphite",
             title = "石墨",
-            subtitle = "中性暗灰 · 低饱和绿光",
             backgroundStart = 0xFF12171B.toInt(),
             backgroundEnd = 0xFF232B30.toInt(),
             glowStart = 0xFF85E3C1.toInt(),

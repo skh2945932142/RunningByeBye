@@ -25,7 +25,6 @@ data class AppearanceTargets(
     val backgroundImage: ImageView,
     val backgroundScrim: View,
     val appTitle: TextView,
-    val appSubtitle: TextView,
     val appearanceButton: ImageButton,
     val cards: List<MaterialCardView>,
     val glassPanels: List<View>,
@@ -143,8 +142,13 @@ class AppearanceApplier(
         val controller = WindowInsetsControllerCompat(window, root)
         controller.isAppearanceLightStatusBars = useDarkIcons
         controller.isAppearanceLightNavigationBars = useDarkIcons
-        window.statusBarColor = if (customBackgroundVisible) Color.TRANSPARENT else preset.backgroundStart
-        window.navigationBarColor = if (customBackgroundVisible) preset.backgroundEnd else preset.backgroundEnd
+        val systemBarColor = if (customBackgroundVisible) {
+            preset.backgroundStart
+        } else {
+            preset.backgroundEnd
+        }
+        window.statusBarColor = systemBarColor
+        window.navigationBarColor = systemBarColor
     }
 
     private fun applyHeader(
@@ -158,10 +162,7 @@ class AppearanceApplier(
         } else {
             Color.WHITE
         }
-        val secondary = withAlpha(primary, 188)
-
         targets.appTitle.setTextColor(primary)
-        targets.appSubtitle.setTextColor(secondary)
         targets.appearanceButton.imageTintList = ColorStateList.valueOf(primary)
         targets.statusPill.setTextColor(preset.accent)
     }

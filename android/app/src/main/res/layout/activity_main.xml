@@ -58,14 +58,6 @@
                         android:textSize="26sp"
                         android:textStyle="bold" />
 
-                    <TextView
-                        android:id="@+id/tvAppSubtitle"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
-                        android:text="RunningByeBye 跑步助手"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="14sp" />
                 </LinearLayout>
 
                 <LinearLayout
@@ -128,15 +120,6 @@
                     android:textColor="@color/text_primary"
                     android:textSize="15sp"
                     android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/tvLoginSubtitle"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
-                    android:text="输入微信 OpenID 后验证用户信息"
-                    android:textColor="@color/text_secondary"
-                    android:textSize="12sp" />
 
                 <LinearLayout
                     android:id="@+id/groupOpenIdInput"
@@ -249,14 +232,6 @@
                     android:textColor="@color/text_primary"
                     android:textSize="15sp"
                     android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
-                    android:text="场地、配速和发包周期会自动保存"
-                    android:textColor="@color/text_secondary"
-                    android:textSize="12sp" />
 
                 <TextView
                     android:layout_width="match_parent"

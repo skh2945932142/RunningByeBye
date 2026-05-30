@@ -43,7 +43,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var bgScrim: View
     private lateinit var rootContent: LinearLayout
     private lateinit var tvAppTitle: TextView
-    private lateinit var tvAppSubtitle: TextView
     private lateinit var btnAppearance: ImageButton
     private lateinit var groupOpenIdInput: LinearLayout
     private lateinit var etOpenID: TextInputEditText
@@ -120,7 +119,6 @@ class MainActivity : AppCompatActivity() {
         bgScrim = findViewById(R.id.bgScrim)
         rootContent = findViewById(R.id.rootContent)
         tvAppTitle = findViewById(R.id.tvAppTitle)
-        tvAppSubtitle = findViewById(R.id.tvAppSubtitle)
         btnAppearance = findViewById(R.id.btnAppearance)
         groupOpenIdInput = findViewById(R.id.groupOpenIdInput)
         etOpenID = findViewById(R.id.etOpenID)
@@ -193,7 +191,6 @@ class MainActivity : AppCompatActivity() {
                 backgroundImage = bgImage,
                 backgroundScrim = bgScrim,
                 appTitle = tvAppTitle,
-                appSubtitle = tvAppSubtitle,
                 appearanceButton = btnAppearance,
                 cards = listOf(cardLogin, cardParams, cardProgress),
                 glassPanels = listOf(cardUserInfo, spinnerField),
@@ -223,7 +220,6 @@ class MainActivity : AppCompatActivity() {
 
     private fun bindAppearanceSheet(sheet: View, dialog: BottomSheetDialog) {
         val presetGroup = sheet.findViewById<GridLayout>(R.id.groupPresetButtons)
-        val backgroundLabel = sheet.findViewById<TextView>(R.id.tvCustomBackgroundLabel)
         val blurValue = sheet.findViewById<TextView>(R.id.tvBlurValue)
         val scrimValue = sheet.findViewById<TextView>(R.id.tvScrimValue)
         val glassValue = sheet.findViewById<TextView>(R.id.tvGlassValue)
@@ -236,12 +232,6 @@ class MainActivity : AppCompatActivity() {
         val closeButton = sheet.findViewById<MaterialButton>(R.id.btnCloseAppearance)
 
         fun syncLabels() {
-            val preset = AppearancePresetCatalog.find(appearanceConfig.presetId)
-            backgroundLabel.text = if (appearanceConfig.customBackgroundUri.isBlank()) {
-                "当前使用预设背景: ${preset.title}"
-            } else {
-                "当前使用相册图片，${preset.title} 作为玻璃配色"
-            }
             blurValue.text = "${appearanceConfig.blurStrength}%"
             scrimValue.text = "${appearanceConfig.scrimStrength}%"
             glassValue.text = "${appearanceConfig.glassStrength}%"
@@ -300,13 +290,13 @@ class MainActivity : AppCompatActivity() {
         AppearancePresetCatalog.all().forEach { preset ->
             val selected = appearanceConfig.customBackgroundUri.isBlank() && appearanceConfig.presetId == preset.id
             val button = MaterialButton(this).apply {
-                text = "${preset.title}\n${preset.subtitle}"
+                text = preset.title
                 isAllCaps = false
-                gravity = Gravity.CENTER_VERTICAL or Gravity.START
-                textAlignment = View.TEXT_ALIGNMENT_TEXT_START
-                maxLines = 2
-                minHeight = dp(64)
-                setPadding(dp(10), 0, dp(10), 0)
+                gravity = Gravity.CENTER
+                textAlignment = View.TEXT_ALIGNMENT_CENTER
+                maxLines = 1
+                minHeight = dp(52)
+                setPadding(dp(12), 0, dp(12), 0)
                 backgroundTintList = ColorStateList.valueOf(
                     withAlpha(preset.surfaceTint, if (selected) 116 else 58),
                 )
