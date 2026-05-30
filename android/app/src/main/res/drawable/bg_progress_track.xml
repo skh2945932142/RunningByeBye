@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape>
+            <solid android:color="@color/card_bg" />
+            <corners android:radius="8dp" />
+        </shape>
+    </item>
+    <item android:gravity="top|end">
+        <vector
+            android:width="180dp"
+            android:height="96dp"
+            android:viewportWidth="180"
+            android:viewportHeight="96">
+            <path
+                android:fillColor="@android:color/transparent"
+                android:pathData="M6,76 C38,22 68,94 100,42 S146,22 174,10"
+                android:strokeColor="@color/track_line"
+                android:strokeLineCap="round"
+                android:strokeLineJoin="round"
+                android:strokeWidth="5" />
+            <path
+                android:fillColor="@color/track_line"
+                android:pathData="M28,54 m-4,0 a4,4 0,1 0,8 0 a4,4 0,1 0,-8 0" />
+            <path
+                android:fillColor="@color/track_line"
+                android:pathData="M118,32 m-4,0 a4,4 0,1 0,8 0 a4,4 0,1 0,-8 0" />
+        </vector>
+    </item>
+</layer-list>

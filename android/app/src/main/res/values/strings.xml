@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">RunningByeBye</string>
+    <string name="run_notification_channel_name">跑步发包</string>
+    <string name="run_notification_channel_description">跑步期间保持后台点位上报</string>
+    <string name="appearance_settings">外观设置</string>
+</resources>

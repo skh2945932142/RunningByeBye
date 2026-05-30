@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.RunningByeBye" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorPrimaryDark">@color/primary_dark</item>
+        <item name="colorAccent">@color/accent</item>
+        <item name="android:fontFamily">sans</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:statusBarColor">@color/screen_bg</item>
+        <item name="android:navigationBarColor">@color/screen_bg</item>
+    </style>
+
+    <color name="primary">#5AC8D8</color>
+    <color name="primary_dark">#2D8B98</color>
+    <color name="accent">#49D7A3</color>
+    <color name="white">#FFFFFF</color>
+    <color name="bg_light">#0F181B</color>
+    <color name="screen_bg">#0F181B</color>
+    <color name="card_bg">#AA172327</color>
+    <color name="panel_bg">#661C2B30</color>
+    <color name="input_bg">#77132024</color>
+    <color name="card_stroke">#55FFFFFF</color>
+    <color name="pill_bg">#3317383C</color>
+    <color name="pill_stroke">#55FFFFFF</color>
+    <color name="progress_track">#66263F45</color>
+    <color name="track_line">#5549D7A3</color>
+    <color name="glass_sheet_bg">#EE111D22</color>
+    <color name="glass_icon_bg">#551E2F36</color>
+    <color name="glass_button_bg">#4DFFFFFF</color>
+    <color name="glass_button_secondary_bg">#24FFFFFF</color>
+    <color name="glass_stroke">#55FFFFFF</color>
+    <color name="text_primary">#EAF5F5</color>
+    <color name="text_secondary">#A0B6BA</color>
+    <color name="success">#49D7A3</color>
+    <color name="danger">#FF7A88</color>
+</resources>
