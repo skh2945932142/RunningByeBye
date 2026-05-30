@@ -101,18 +101,18 @@ type Runc struct {
 
 func New(opts ...Option) (*Runc, error) {
 	basicInfo := &BasicInfo{
-		RedisAddr:    "localhost:6379",
+		RedisAddr:     "localhost:6379",
 		RedisPassword: "",
-		RedisDB:      0,
-		TokenStore:   consts.TOKEN_STORE_MEMORY,
-		SessionStore: consts.SESSION_STORE_FILE,
-		PointsDir:    consts.POINTS_DIR,
-		TaskDir:      consts.SESSION_TASK_DIR,
-		CacheDir:     consts.SESSION_CACHE_DIR,
-		UserAgent:    consts.DEFAULT_USER_AGENT,
-		PhoneType:    consts.DEFAULT_PHONE_TYPE,
-		LogLevel:     pkg.LogLevelInfo,
-		LogFile:      "",
+		RedisDB:       0,
+		TokenStore:    consts.TOKEN_STORE_MEMORY,
+		SessionStore:  consts.SESSION_STORE_FILE,
+		PointsDir:     consts.POINTS_DIR,
+		TaskDir:       consts.SESSION_TASK_DIR,
+		CacheDir:      consts.SESSION_CACHE_DIR,
+		UserAgent:     consts.DEFAULT_USER_AGENT,
+		PhoneType:     consts.DEFAULT_PHONE_TYPE,
+		LogLevel:      pkg.LogLevelInfo,
+		LogFile:       "",
 	}
 
 	for _, opt := range opts {
@@ -171,7 +171,7 @@ func New(opts ...Option) (*Runc, error) {
 	}
 	h := handler.NewHandler(hReliance)
 
-	logger.Info("Runc module initialized")
+	logger.Debug("Runc module initialized")
 
 	return &Runc{
 		Handler:   h,
@@ -183,7 +183,7 @@ func New(opts ...Option) (*Runc, error) {
 }
 
 func (r *Runc) Close() {
-	r.Logger.Info("Runc module shutting down")
+	r.Logger.Debug("Runc module shutting down")
 	r.Scheduler.Stop()
 	r.Service.Close()
 	r.Logger.Close()

@@ -44,7 +44,7 @@ func (sch *Scheduler) AddTask(task *models.TaskNode) error {
 
 	task.State = models.TaskStatePending
 	sch.tasks[task.TargetUser.OpenID] = task
-	sch.reliance.Logger.Info("Task added for user %s, field=%s", task.TargetUser.OpenID, task.TaskSettings.TargetFieldID)
+	sch.reliance.Logger.Debug("Task added for user %s, field=%s", task.TargetUser.OpenID, task.TaskSettings.TargetFieldID)
 
 	go sch.runTask(task)
 	return nil
@@ -77,7 +77,7 @@ func (sch *Scheduler) RemoveTask(openID string) {
 		Mileage:        mileage,
 		State:          "completed",
 	}
-	sch.reliance.Logger.Info("Task removed for user %s", openID)
+	sch.reliance.Logger.Debug("Task removed for user %s", openID)
 }
 
 func (sch *Scheduler) PauseTask(openID string) {
@@ -88,19 +88,24 @@ func (sch *Scheduler) PauseTask(openID string) {
 		task.IsPaused = true
 		task.State = models.TaskStatePaused
 		sch.reliance.Service.GetSessionStore().Save(openID, task)
-		sch.reliance.Logger.Info("Task paused for user %s", openID)
+		sch.reliance.Logger.Debug("Task paused for user %s", openID)
 	}
 }
 
 func (sch *Scheduler) ResumeTask(openID string) {
 	sch.mu.Lock()
-	defer sch.mu.Unlock()
+	task, ok := sch.tasks[openID]
+	sch.mu.Unlock()
 
-	if task, ok := sch.tasks[openID]; ok {
-		task.IsPaused = false
-		task.State = models.TaskStateRunning
-		sch.reliance.Logger.Info("Task resumed for user %s", openID)
+	if !ok {
+		return
 	}
+
+	task.IsPaused = false
+	task.State = models.TaskStateRunning
+	sch.reliance.Logger.Debug("Task resumed for user %s", openID)
+
+	go sch.runTask(task)
 }
 
 func (sch *Scheduler) GetTask(openID string) *models.TaskNode {
@@ -128,16 +133,20 @@ func (sch *Scheduler) RecoverTasks() error {
 			continue
 		}
 
+		wasPaused := task.IsPaused
+
 		task.State = models.TaskStateRunning
-		task.IsPaused = false
+		task.IsPaused = wasPaused
 
 		sch.mu.Lock()
 		sch.tasks[openID] = task
 		sch.mu.Unlock()
 
-		sch.reliance.Logger.Info("Task recovered for user %s, progress=%d/%d", openID, task.SubmittedCount, len(task.LocationPoints))
+		sch.reliance.Logger.Debug("Task recovered for user %s, progress=%d/%d", openID, task.SubmittedCount, len(task.LocationPoints))
 
-		go sch.runTask(task)
+		if !wasPaused {
+			go sch.runTask(task)
+		}
 	}
 
 	return nil
@@ -145,7 +154,7 @@ func (sch *Scheduler) RecoverTasks() error {
 
 func (sch *Scheduler) runTask(task *models.TaskNode) {
 	openID := task.TargetUser.OpenID
-	sch.reliance.Logger.Info("Task runner started for user %s", openID)
+	sch.reliance.Logger.Debug("Task runner started for user %s", openID)
 
 	if task.RecordNo == "" {
 		recordNo, err := sch.reliance.Service.StartRunning(openID, task.TaskSettings.TargetFieldID)
@@ -155,7 +164,7 @@ func (sch *Scheduler) runTask(task *models.TaskNode) {
 			return
 		}
 		task.RecordNo = recordNo
-		sch.reliance.Logger.Info("Running started for %s, recordNo=%s", openID, recordNo)
+		sch.reliance.Logger.Debug("Running started for %s, recordNo=%s", openID, recordNo)
 	}
 
 	task.State = models.TaskStateRunning
@@ -169,8 +178,10 @@ func (sch *Scheduler) runTask(task *models.TaskNode) {
 	for {
 		select {
 		case <-sch.stopCh:
-			sch.reliance.Logger.Info("Task runner stopping for %s", openID)
-			sch.reliance.Service.GetSessionStore().Save(openID, task)
+			sch.reliance.Logger.Debug("Task runner stopping for %s", openID)
+			if !task.IsPaused {
+				sch.reliance.Service.GetSessionStore().Save(openID, task)
+			}
 			return
 		case <-ticker.C:
 			sch.mu.Lock()
@@ -263,7 +274,7 @@ func (sch *Scheduler) finishTask(openID string, task *models.TaskNode) {
 	delete(sch.tasks, openID)
 	sch.mu.Unlock()
 
-	sch.reliance.Logger.Info("Task finished for %s, state=%d", openID, task.State)
+	sch.reliance.Logger.Debug("Task finished for %s, state=%d", openID, task.State)
 }
 
 func (sch *Scheduler) failTask(openID string, err error) {
@@ -284,6 +295,6 @@ func (sch *Scheduler) failTask(openID string, err error) {
 func (sch *Scheduler) Stop() {
 	sch.stopOnce.Do(func() {
 		close(sch.stopCh)
-		sch.reliance.Logger.Info("Scheduler stopped")
+		sch.reliance.Logger.Debug("Scheduler stopped")
 	})
 }

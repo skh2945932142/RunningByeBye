@@ -218,7 +218,7 @@ func (s *Service) getOrCreateSDK(openID string) (*sdk.SDK, error) {
 		return nil, fmt.Errorf("failed to create SDK for %s: %w", openID, err)
 	}
 	s.sdkClients[openID] = sdkClient
-	s.reliance.Logger.Info("SDK created for user %s", openID)
+	s.reliance.Logger.Debug("SDK created for user %s", openID)
 	return sdkClient, nil
 }
 
@@ -234,7 +234,7 @@ func (s *Service) Login(openID string) (*models.UserNode, error) {
 		return nil, fmt.Errorf("login GetToken failed: %w", err)
 	}
 	token := tokenInfo.Data.Token
-	s.reliance.Logger.Info("Login token obtained for %s", openID)
+	s.reliance.Logger.Debug("Login token obtained for %s", openID)
 
 	s.tokenStore.Set(openID, token)
 
@@ -257,7 +257,7 @@ func (s *Service) Login(openID string) (*models.UserNode, error) {
 		},
 	}
 
-	s.reliance.Logger.Info("Login success for %s (%s)", userNode.MetaInfo.Username, openID)
+	s.reliance.Logger.Debug("Login success for %s (%s)", userNode.MetaInfo.Username, openID)
 	return userNode, nil
 }
 
@@ -267,7 +267,7 @@ func (s *Service) EnsureToken(openID string) (string, error) {
 		return token, nil
 	}
 
-	s.reliance.Logger.Info("Token refresh for %s", openID)
+	s.reliance.Logger.Debug("Token refresh for %s", openID)
 	userNode, err := s.Login(openID)
 	if err != nil {
 		return "", err
@@ -349,7 +349,7 @@ func (s *Service) StartRunning(openID string, fieldID string) (string, error) {
 		s.reliance.Logger.Error("StartRunning failed for %s: %v", openID, err)
 		return "", err
 	}
-	s.reliance.Logger.Info("StartRunning success for %s, recordNo=%s", openID, resp.Data)
+	s.reliance.Logger.Debug("StartRunning success for %s, recordNo=%s", openID, resp.Data)
 	return resp.Data, nil
 }
 
@@ -396,7 +396,7 @@ func (s *Service) FinishRunning(openID string, recordNo string) (bool, error) {
 		s.reliance.Logger.Error("FinishRunning failed for %s: %v", openID, err)
 		return false, err
 	}
-	s.reliance.Logger.Info("FinishRunning success for %s, result=%v", openID, resp.Data)
+	s.reliance.Logger.Debug("FinishRunning success for %s, result=%v", openID, resp.Data)
 	return resp.Data, nil
 }
 
@@ -409,5 +409,5 @@ func (s *Service) Close() {
 		}
 	}
 	s.sdkClients = make(map[string]*sdk.SDK)
-	s.reliance.Logger.Info("All SDK clients closed")
+	s.reliance.Logger.Debug("All SDK clients closed")
 }

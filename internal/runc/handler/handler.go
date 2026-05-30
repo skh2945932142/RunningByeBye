@@ -125,6 +125,14 @@ func (h *Handler) GetProgress(openID string) *models.TaskNode {
 	return h.reliance.Scheduler.GetTask(openID)
 }
 
+func (h *Handler) LoadTask(openID string) (*models.TaskNode, error) {
+	task := h.reliance.Scheduler.GetTask(openID)
+	if task != nil {
+		return task, nil
+	}
+	return h.reliance.Service.GetSessionStore().Load(openID)
+}
+
 func (h *Handler) ProgressChannel() <-chan models.ProgressEvent {
 	return h.reliance.Scheduler.EventChannel()
 }

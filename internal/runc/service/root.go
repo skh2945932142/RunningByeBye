@@ -35,28 +35,28 @@ func NewService(reliance ServiceReliance) *Service {
 	case consts.TOKEN_STORE_REDIS:
 		if reliance.RedisClient != nil {
 			svc.tokenStore = NewRedisTokenStore(reliance.RedisClient)
-			svc.reliance.Logger.Info("TokenStore: redis")
+			svc.reliance.Logger.Debug("TokenStore: redis")
 		} else {
 			svc.tokenStore = NewMemoryTokenStore()
 			svc.reliance.Logger.Warn("TokenStore: redis configured but no client, fallback to memory")
 		}
 	default:
 		svc.tokenStore = NewMemoryTokenStore()
-		svc.reliance.Logger.Info("TokenStore: memory")
+		svc.reliance.Logger.Debug("TokenStore: memory")
 	}
 
 	switch reliance.Config.SessionStoreType {
 	case consts.SESSION_STORE_REDIS:
 		if reliance.RedisClient != nil {
 			svc.sessionStore = NewRedisSessionStore(reliance.RedisClient)
-			svc.reliance.Logger.Info("SessionStore: redis")
+			svc.reliance.Logger.Debug("SessionStore: redis")
 		} else {
 			svc.sessionStore = NewFileSessionStore(reliance.Config.TaskDir)
 			svc.reliance.Logger.Warn("SessionStore: redis configured but no client, fallback to file")
 		}
 	default:
 		svc.sessionStore = NewFileSessionStore(reliance.Config.TaskDir)
-		svc.reliance.Logger.Info("SessionStore: file")
+		svc.reliance.Logger.Debug("SessionStore: file")
 	}
 
 	return svc
