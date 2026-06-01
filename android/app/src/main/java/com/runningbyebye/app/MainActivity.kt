@@ -20,6 +20,7 @@ import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ProgressBar
+import android.widget.ScrollView
 import android.widget.SeekBar
 import android.widget.Spinner
 import android.widget.TextView
@@ -27,6 +28,7 @@ import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.constraintlayout.motion.widget.MotionLayout
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.google.android.material.bottomsheet.BottomSheetDialog
@@ -38,10 +40,11 @@ import java.io.File
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var rootContainer: View
+    private lateinit var rootContainer: MotionLayout
     private lateinit var bgImage: ImageView
     private lateinit var bgScrim: View
     private lateinit var bgSheen: View
+    private lateinit var contentScroll: ScrollView
     private lateinit var rootContent: LinearLayout
     private lateinit var headerBar: LinearLayout
     private lateinit var tvAppTitle: TextView
@@ -67,6 +70,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var panelProgressMetric: LinearLayout
     private lateinit var panelMileageMetric: LinearLayout
     private lateinit var panelPointsMetric: LinearLayout
+    private lateinit var progressSheen: View
     private lateinit var tvProgress: TextView
     private lateinit var tvMileage: TextView
     private lateinit var tvPoints: TextView
@@ -135,6 +139,7 @@ class MainActivity : AppCompatActivity() {
         bgImage = findViewById(R.id.bgImage)
         bgScrim = findViewById(R.id.bgScrim)
         bgSheen = findViewById(R.id.bgSheen)
+        contentScroll = findViewById(R.id.contentScroll)
         rootContent = findViewById(R.id.rootContent)
         headerBar = findViewById(R.id.headerBar)
         tvAppTitle = findViewById(R.id.tvAppTitle)
@@ -160,6 +165,7 @@ class MainActivity : AppCompatActivity() {
         panelProgressMetric = findViewById(R.id.panelProgressMetric)
         panelMileageMetric = findViewById(R.id.panelMileageMetric)
         panelPointsMetric = findViewById(R.id.panelPointsMetric)
+        progressSheen = findViewById(R.id.progressSheen)
         tvProgress = findViewById(R.id.tvProgress)
         tvMileage = findViewById(R.id.tvMileage)
         tvPoints = findViewById(R.id.tvPoints)
@@ -241,11 +247,28 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupMotion() {
+        motionController.bindHomeScrollMotion(
+            scrollView = contentScroll,
+            motionLayout = rootContainer,
+            headerBar = headerBar,
+            backgroundSheen = bgSheen,
+            panels = listOf(cardLogin, cardParams, groupActions, cardProgress),
+        )
         motionController.bindPressFeedback(
+            GlassMotionController.PressFeedbackStyle.ICON,
             btnAppearance,
+        )
+        motionController.bindPressFeedback(
+            GlassMotionController.PressFeedbackStyle.PRIMARY,
             btnLogin,
-            btnEditOpenId,
             btnStart,
+        )
+        motionController.bindPressFeedback(
+            GlassMotionController.PressFeedbackStyle.SECONDARY,
+            btnEditOpenId,
+        )
+        motionController.bindPressFeedback(
+            GlassMotionController.PressFeedbackStyle.PRIMARY,
             btnStop,
         )
         rootContent.post {
@@ -278,7 +301,16 @@ class MainActivity : AppCompatActivity() {
         val clearButton = sheet.findViewById<MaterialButton>(R.id.btnClearBackground)
         val resetButton = sheet.findViewById<MaterialButton>(R.id.btnResetAppearance)
         val closeButton = sheet.findViewById<MaterialButton>(R.id.btnCloseAppearance)
-        motionController.bindPressFeedback(pickButton, clearButton, resetButton, closeButton)
+        motionController.bindPressFeedback(
+            GlassMotionController.PressFeedbackStyle.PRIMARY,
+            pickButton,
+            closeButton,
+        )
+        motionController.bindPressFeedback(
+            GlassMotionController.PressFeedbackStyle.SECONDARY,
+            clearButton,
+            resetButton,
+        )
 
         fun syncLabels() {
             blurValue.text = "${appearanceConfig.blurStrength}%"
@@ -377,7 +409,7 @@ class MainActivity : AppCompatActivity() {
                 setTextColor(ContextCompat.getColor(this@MainActivity, R.color.text_primary))
                 setOnClickListener { onPresetSelected(preset) }
             }
-            motionController.bindPressFeedback(button)
+            motionController.bindPressFeedback(GlassMotionController.PressFeedbackStyle.PANEL, button)
             val params = GridLayout.LayoutParams().apply {
                 width = 0
                 height = ViewGroup.LayoutParams.WRAP_CONTENT
@@ -612,6 +644,7 @@ class MainActivity : AppCompatActivity() {
                 motionController.setStatusPulse(tvStatusPill, false)
                 setStatusText("跑步完成!", R.color.success, "完成")
                 motionController.animateProgress(progressBar, 100)
+                motionController.playProgressSheen(progressSheen)
                 tvProgress.text = "100%"
                 tvMileage.text = MileageFormatter.formatKm(status.mileage)
                 btnLogin.isEnabled = true
@@ -669,7 +702,10 @@ class MainActivity : AppCompatActivity() {
         }
         TransitionManager.beginDelayedTransition(rootContent)
         cardProgress.visibility = View.VISIBLE
-        cardProgress.post { motionController.playEntrance(listOf(cardProgress)) }
+        cardProgress.post {
+            motionController.playEntrance(listOf(cardProgress))
+            motionController.playProgressSheen(progressSheen)
+        }
     }
 
     private fun setStatusText(status: String, colorRes: Int, pillText: String) {

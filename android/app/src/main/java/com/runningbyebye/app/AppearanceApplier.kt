@@ -213,12 +213,13 @@ class AppearanceApplier(
             card.setCardBackgroundColor(surfaceColor)
             card.setStrokeColor(strokeColor)
             card.strokeWidth = context.dp(1)
-            card.cardElevation = 0f
+            card.cardElevation = context.dp(1).toFloat()
             card.foreground = glassForeground(preset, 8)
         }
 
         targets.glassPanels.forEach { panel ->
             panel.background = roundedGlassSurface(surfaceColor, strokeColor, preset, 8)
+            panel.elevation = context.dp(1).toFloat()
         }
 
         targets.primaryButtons.forEach { button ->
@@ -253,12 +254,12 @@ class AppearanceApplier(
     }
 
     private fun surfaceColor(config: AppearanceConfig): Int {
-        val alpha = (142 + config.glassStrength).coerceIn(142, 236)
+        val alpha = (136 + config.glassStrength).coerceIn(136, 228)
         return withAlpha(surfaceBaseColor(), alpha)
     }
 
     private fun strokeColor(config: AppearanceConfig, preset: AppearancePreset): Int {
-        val alpha = (38 + config.glassStrength / 2).coerceIn(38, 88)
+        val alpha = (52 + config.glassStrength / 2).coerceIn(52, 110)
         return withAlpha(if (isNightMode()) Color.WHITE else preset.accent, alpha)
     }
 
@@ -277,14 +278,14 @@ class AppearanceApplier(
         }
         val topLight = GradientDrawable(
             GradientDrawable.Orientation.TOP_BOTTOM,
-            intArrayOf(withAlpha(Color.WHITE, 42), withAlpha(Color.WHITE, 8), Color.TRANSPARENT),
+            intArrayOf(withAlpha(Color.WHITE, 58), withAlpha(Color.WHITE, 14), Color.TRANSPARENT),
         ).apply {
             shape = GradientDrawable.RECTANGLE
             cornerRadius = radius
         }
         val edgeTint = GradientDrawable(
             GradientDrawable.Orientation.TL_BR,
-            intArrayOf(withAlpha(Color.WHITE, 28), Color.TRANSPARENT, withAlpha(preset.accent, 24)),
+            intArrayOf(withAlpha(Color.WHITE, 36), Color.TRANSPARENT, withAlpha(preset.accent, 34)),
         ).apply {
             shape = GradientDrawable.RECTANGLE
             cornerRadius = radius
@@ -296,14 +297,14 @@ class AppearanceApplier(
         val radius = context.dp(cornerDp).toFloat()
         val surfaceGlint = GradientDrawable(
             GradientDrawable.Orientation.TL_BR,
-            intArrayOf(withAlpha(Color.WHITE, 34), Color.TRANSPARENT, withAlpha(preset.accent, 18)),
+            intArrayOf(withAlpha(Color.WHITE, 48), Color.TRANSPARENT, withAlpha(preset.accent, 28)),
         ).apply {
             shape = GradientDrawable.RECTANGLE
             cornerRadius = radius
         }
         val topEdge = GradientDrawable(
             GradientDrawable.Orientation.TOP_BOTTOM,
-            intArrayOf(withAlpha(Color.WHITE, 30), Color.TRANSPARENT),
+            intArrayOf(withAlpha(Color.WHITE, 42), Color.TRANSPARENT),
         ).apply {
             shape = GradientDrawable.RECTANGLE
             cornerRadius = radius
