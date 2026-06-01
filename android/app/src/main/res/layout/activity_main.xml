@@ -20,6 +20,14 @@
         android:layout_height="match_parent"
         android:background="@android:color/transparent" />
 
+    <View
+        android:id="@+id/bgSheen"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:alpha="0"
+        android:background="@drawable/bg_background_sheen"
+        android:visibility="gone" />
+
     <ScrollView
         android:id="@+id/contentScroll"
         android:layout_width="match_parent"
@@ -37,6 +45,7 @@
             android:paddingBottom="20dp">
 
             <LinearLayout
+                android:id="@+id/headerBar"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="14dp"
@@ -389,10 +398,15 @@
                         android:orientation="horizontal">
 
                         <LinearLayout
+                            android:id="@+id/panelProgressMetric"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
+                            android:layout_marginEnd="5dp"
                             android:layout_weight="1"
-                            android:orientation="vertical">
+                            android:background="@drawable/bg_metric_glass"
+                            android:minHeight="72dp"
+                            android:orientation="vertical"
+                            android:padding="10dp">
 
                             <TextView
                                 android:layout_width="match_parent"
@@ -407,15 +421,22 @@
                                 android:layout_height="wrap_content"
                                 android:text="0%"
                                 android:textColor="@color/primary"
-                                android:textSize="20sp"
+                                android:textSize="18sp"
+                                android:maxLines="1"
                                 android:textStyle="bold" />
                         </LinearLayout>
 
                         <LinearLayout
+                            android:id="@+id/panelMileageMetric"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
+                            android:layout_marginStart="5dp"
+                            android:layout_marginEnd="5dp"
                             android:layout_weight="1"
-                            android:orientation="vertical">
+                            android:background="@drawable/bg_metric_glass"
+                            android:minHeight="72dp"
+                            android:orientation="vertical"
+                            android:padding="10dp">
 
                             <TextView
                                 android:layout_width="match_parent"
@@ -430,15 +451,21 @@
                                 android:layout_height="wrap_content"
                                 android:text="0.000 km"
                                 android:textColor="@color/primary"
-                                android:textSize="20sp"
+                                android:textSize="18sp"
+                                android:maxLines="1"
                                 android:textStyle="bold" />
                         </LinearLayout>
 
                         <LinearLayout
+                            android:id="@+id/panelPointsMetric"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
+                            android:layout_marginStart="5dp"
                             android:layout_weight="1"
-                            android:orientation="vertical">
+                            android:background="@drawable/bg_metric_glass"
+                            android:minHeight="72dp"
+                            android:orientation="vertical"
+                            android:padding="10dp">
 
                             <TextView
                                 android:layout_width="match_parent"
@@ -453,7 +480,8 @@
                                 android:layout_height="wrap_content"
                                 android:text="0/0"
                                 android:textColor="@color/primary"
-                                android:textSize="20sp"
+                                android:textSize="18sp"
+                                android:maxLines="1"
                                 android:textStyle="bold" />
                         </LinearLayout>
                     </LinearLayout>

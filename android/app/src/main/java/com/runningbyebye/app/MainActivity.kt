@@ -41,7 +41,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var rootContainer: View
     private lateinit var bgImage: ImageView
     private lateinit var bgScrim: View
+    private lateinit var bgSheen: View
     private lateinit var rootContent: LinearLayout
+    private lateinit var headerBar: LinearLayout
     private lateinit var tvAppTitle: TextView
     private lateinit var btnAppearance: ImageButton
     private lateinit var groupOpenIdInput: LinearLayout
@@ -62,14 +64,19 @@ class MainActivity : AppCompatActivity() {
     private lateinit var cardProgress: MaterialCardView
     private lateinit var tvStatus: TextView
     private lateinit var progressBar: ProgressBar
+    private lateinit var panelProgressMetric: LinearLayout
+    private lateinit var panelMileageMetric: LinearLayout
+    private lateinit var panelPointsMetric: LinearLayout
     private lateinit var tvProgress: TextView
     private lateinit var tvMileage: TextView
     private lateinit var tvPoints: TextView
+    private lateinit var groupActions: LinearLayout
 
     private var runner: mobile.Runner? = null
     private lateinit var runOptionsStore: RunOptionsStore
     private lateinit var appearanceStore: AppearanceStore
     private lateinit var appearanceApplier: AppearanceApplier
+    private lateinit var motionController: GlassMotionController
     private lateinit var backgroundPickerLauncher: ActivityResultLauncher<Array<String>>
     private var appearanceConfig = AppearanceConfig()
     private var loggedInOpenID: String? = null
@@ -90,6 +97,7 @@ class MainActivity : AppCompatActivity() {
         runOptionsStore = RunOptionsStore.from(this)
         appearanceStore = AppearanceStore.from(this)
         appearanceApplier = AppearanceApplier(this, window)
+        motionController = GlassMotionController(this)
         registerBackgroundPicker()
         initViews()
         appearanceConfig = appearanceStore.load()
@@ -97,6 +105,7 @@ class MainActivity : AppCompatActivity() {
         setupListeners()
         restoreSavedOptions()
         applyAppearance()
+        setupMotion()
 
         // 初始化登录用 Go Runner
         initRunner()
@@ -105,19 +114,29 @@ class MainActivity : AppCompatActivity() {
 
     override fun onStart() {
         super.onStart()
+        motionController.startAmbientSheen(bgSheen)
         RunServiceState.observe(runStatusObserver)
     }
 
     override fun onStop() {
         RunServiceState.removeObserver(runStatusObserver)
+        motionController.setStatusPulse(tvStatusPill, false)
+        motionController.stopAmbientSheen()
         super.onStop()
+    }
+
+    override fun onDestroy() {
+        motionController.release()
+        super.onDestroy()
     }
 
     private fun initViews() {
         rootContainer = findViewById(R.id.rootContainer)
         bgImage = findViewById(R.id.bgImage)
         bgScrim = findViewById(R.id.bgScrim)
+        bgSheen = findViewById(R.id.bgSheen)
         rootContent = findViewById(R.id.rootContent)
+        headerBar = findViewById(R.id.headerBar)
         tvAppTitle = findViewById(R.id.tvAppTitle)
         btnAppearance = findViewById(R.id.btnAppearance)
         groupOpenIdInput = findViewById(R.id.groupOpenIdInput)
@@ -138,9 +157,13 @@ class MainActivity : AppCompatActivity() {
         cardProgress = findViewById(R.id.cardProgress)
         tvStatus = findViewById(R.id.tvStatus)
         progressBar = findViewById(R.id.progressBar)
+        panelProgressMetric = findViewById(R.id.panelProgressMetric)
+        panelMileageMetric = findViewById(R.id.panelMileageMetric)
+        panelPointsMetric = findViewById(R.id.panelPointsMetric)
         tvProgress = findViewById(R.id.tvProgress)
         tvMileage = findViewById(R.id.tvMileage)
         tvPoints = findViewById(R.id.tvPoints)
+        groupActions = findViewById(R.id.groupActions)
     }
 
     private fun setupSpinner() {
@@ -190,10 +213,17 @@ class MainActivity : AppCompatActivity() {
                 root = rootContainer,
                 backgroundImage = bgImage,
                 backgroundScrim = bgScrim,
+                backgroundSheen = bgSheen,
                 appTitle = tvAppTitle,
                 appearanceButton = btnAppearance,
                 cards = listOf(cardLogin, cardParams, cardProgress),
-                glassPanels = listOf(cardUserInfo, spinnerField),
+                glassPanels = listOf(
+                    cardUserInfo,
+                    spinnerField,
+                    panelProgressMetric,
+                    panelMileageMetric,
+                    panelPointsMetric,
+                ),
                 primaryButtons = listOf(btnLogin, btnStart),
                 secondaryButtons = listOf(btnEditOpenId),
                 dangerButtons = listOf(btnStop),
@@ -210,11 +240,29 @@ class MainActivity : AppCompatActivity() {
         applyAppearance()
     }
 
+    private fun setupMotion() {
+        motionController.bindPressFeedback(
+            btnAppearance,
+            btnLogin,
+            btnEditOpenId,
+            btnStart,
+            btnStop,
+        )
+        rootContent.post {
+            motionController.playEntrance(
+                listOf(headerBar, cardLogin, cardParams, groupActions),
+            )
+        }
+    }
+
     private fun showAppearanceSheet() {
         val dialog = BottomSheetDialog(this)
         val sheet = layoutInflater.inflate(R.layout.dialog_appearance, null)
         dialog.setContentView(sheet)
         bindAppearanceSheet(sheet, dialog)
+        dialog.setOnShowListener {
+            sheet.findViewById<View>(R.id.appearanceSheet)?.let { motionController.playSheetEntrance(it) }
+        }
         dialog.show()
     }
 
@@ -230,6 +278,7 @@ class MainActivity : AppCompatActivity() {
         val clearButton = sheet.findViewById<MaterialButton>(R.id.btnClearBackground)
         val resetButton = sheet.findViewById<MaterialButton>(R.id.btnResetAppearance)
         val closeButton = sheet.findViewById<MaterialButton>(R.id.btnCloseAppearance)
+        motionController.bindPressFeedback(pickButton, clearButton, resetButton, closeButton)
 
         fun syncLabels() {
             blurValue.text = "${appearanceConfig.blurStrength}%"
@@ -242,6 +291,10 @@ class MainActivity : AppCompatActivity() {
             scrimSeek.progress = appearanceConfig.scrimStrength
             glassSeek.progress = appearanceConfig.glassStrength
             syncLabels()
+            tintAppearanceSheetControls(
+                seekBars = listOf(blurSeek, scrimSeek, glassSeek),
+                buttons = listOf(pickButton, clearButton, resetButton, closeButton),
+            )
             bindPresetButtons(presetGroup) { preset ->
                 saveAndApplyAppearance(
                     appearanceConfig.copy(
@@ -282,6 +335,23 @@ class MainActivity : AppCompatActivity() {
         closeButton.setOnClickListener { dialog.dismiss() }
     }
 
+    private fun tintAppearanceSheetControls(
+        seekBars: List<SeekBar>,
+        buttons: List<MaterialButton>,
+    ) {
+        val preset = AppearancePresetCatalog.find(appearanceConfig.presetId)
+        val accent = preset.accent
+        seekBars.forEach { seekBar ->
+            seekBar.progressTintList = ColorStateList.valueOf(accent)
+            seekBar.thumbTintList = ColorStateList.valueOf(accent)
+            seekBar.progressBackgroundTintList = ColorStateList.valueOf(withAlpha(accent, 42))
+        }
+        buttons.forEach { button ->
+            button.strokeColor = ColorStateList.valueOf(withAlpha(accent, 112))
+            button.rippleColor = ColorStateList.valueOf(withAlpha(accent, 46))
+        }
+    }
+
     private fun bindPresetButtons(
         group: GridLayout,
         onPresetSelected: (AppearancePreset) -> Unit,
@@ -307,6 +377,7 @@ class MainActivity : AppCompatActivity() {
                 setTextColor(ContextCompat.getColor(this@MainActivity, R.color.text_primary))
                 setOnClickListener { onPresetSelected(preset) }
             }
+            motionController.bindPressFeedback(button)
             val params = GridLayout.LayoutParams().apply {
                 width = 0
                 height = ViewGroup.LayoutParams.WRAP_CONTENT
@@ -501,6 +572,7 @@ class MainActivity : AppCompatActivity() {
     private fun renderRunStatus(status: RunStatus) {
         when (status) {
             RunStatus.Idle -> {
+                motionController.setStatusPulse(tvStatusPill, false)
                 btnLogin.isEnabled = true
                 btnStart.isEnabled = loggedInOpenID != null
                 btnEditOpenId.isEnabled = true
@@ -510,6 +582,7 @@ class MainActivity : AppCompatActivity() {
 
             is RunStatus.Running -> {
                 showProgressCard()
+                motionController.setStatusPulse(tvStatusPill, true)
                 setStatusText("跑步中... ${status.fieldName}", R.color.success, "跑步中")
                 btnLogin.isEnabled = false
                 btnEditOpenId.isEnabled = false
@@ -521,8 +594,9 @@ class MainActivity : AppCompatActivity() {
             is RunStatus.Progress -> {
                 val percent = if (status.total > 0) status.submitted * 100 / status.total else 0
                 showProgressCard()
+                motionController.setStatusPulse(tvStatusPill, true)
                 setStatusText("跑步中...", R.color.success, "跑步中")
-                progressBar.progress = percent
+                motionController.animateProgress(progressBar, percent)
                 tvProgress.text = "$percent%"
                 tvMileage.text = MileageFormatter.formatKm(status.mileage)
                 tvPoints.text = "${status.submitted}/${status.total}"
@@ -535,8 +609,9 @@ class MainActivity : AppCompatActivity() {
 
             is RunStatus.Completed -> {
                 showProgressCard()
+                motionController.setStatusPulse(tvStatusPill, false)
                 setStatusText("跑步完成!", R.color.success, "完成")
-                progressBar.progress = 100
+                motionController.animateProgress(progressBar, 100)
                 tvProgress.text = "100%"
                 tvMileage.text = MileageFormatter.formatKm(status.mileage)
                 btnLogin.isEnabled = true
@@ -548,6 +623,7 @@ class MainActivity : AppCompatActivity() {
 
             is RunStatus.Failed -> {
                 showProgressCard()
+                motionController.setStatusPulse(tvStatusPill, false)
                 setStatusText("失败: ${status.message}", R.color.danger, "失败")
                 btnLogin.isEnabled = true
                 btnEditOpenId.isEnabled = true
@@ -558,6 +634,7 @@ class MainActivity : AppCompatActivity() {
 
             is RunStatus.Stopped -> {
                 showProgressCard()
+                motionController.setStatusPulse(tvStatusPill, false)
                 setStatusText(status.message, R.color.danger, "已停止")
                 btnLogin.isEnabled = true
                 btnEditOpenId.isEnabled = true
@@ -592,7 +669,7 @@ class MainActivity : AppCompatActivity() {
         }
         TransitionManager.beginDelayedTransition(rootContent)
         cardProgress.visibility = View.VISIBLE
-        animateAppear(cardProgress)
+        cardProgress.post { motionController.playEntrance(listOf(cardProgress)) }
     }
 
     private fun setStatusText(status: String, colorRes: Int, pillText: String) {
@@ -612,18 +689,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun pulseProgressMetrics() {
-        tvMileage.animate()
-            .scaleX(1.03f)
-            .scaleY(1.03f)
-            .setDuration(90L)
-            .withEndAction {
-                tvMileage.animate()
-                    .scaleX(1f)
-                    .scaleY(1f)
-                    .setDuration(90L)
-                    .start()
-            }
-            .start()
+        motionController.pulseMetrics(tvProgress, tvMileage, tvPoints)
     }
 
     private fun showTerminalToastOnce(status: RunStatus, message: String) {

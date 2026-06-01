@@ -27,6 +27,16 @@ go.work.sum
 # env file
 .env
 
+# Android local build/signing files
+android/local.properties
+android/.gradle/
+android/build/
+android/app/build/
+android/keystore.properties
+android/app/release/*.jks
+android/app/release/*.keystore
+android/app/release/*.p12
+
 # Editor/IDE
 # .idea/
 # .vscode/

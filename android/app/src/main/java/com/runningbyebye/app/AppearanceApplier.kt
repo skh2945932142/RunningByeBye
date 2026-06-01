@@ -24,6 +24,7 @@ data class AppearanceTargets(
     val root: View,
     val backgroundImage: ImageView,
     val backgroundScrim: View,
+    val backgroundSheen: View,
     val appTitle: TextView,
     val appearanceButton: ImageButton,
     val cards: List<MaterialCardView>,
@@ -78,6 +79,8 @@ class AppearanceApplier(
 
         applyBlur(targets.backgroundImage, customBackgroundVisible, config.blurStrength)
         targets.backgroundScrim.setBackgroundColor(scrimColor(preset, config, customBackgroundVisible))
+        targets.backgroundSheen.background = createBackgroundSheen(preset)
+        targets.backgroundSheen.alpha = if (customBackgroundVisible) 0.22f else 0.34f
         return customBackgroundVisible
     }
 
@@ -101,6 +104,20 @@ class AppearanceApplier(
             gradientRadius = context.dp(360).toFloat()
         }
         return LayerDrawable(arrayOf(base, glowA, glowB))
+    }
+
+    private fun createBackgroundSheen(preset: AppearancePreset): GradientDrawable {
+        return GradientDrawable(
+            GradientDrawable.Orientation.TL_BR,
+            intArrayOf(
+                Color.TRANSPARENT,
+                withAlpha(Color.WHITE, 34),
+                withAlpha(preset.accent, 24),
+                Color.TRANSPARENT,
+            ),
+        ).apply {
+            shape = GradientDrawable.RECTANGLE
+        }
     }
 
     private fun applyBlur(imageView: ImageView, enabled: Boolean, strength: Int) {
@@ -164,6 +181,18 @@ class AppearanceApplier(
         }
         targets.appTitle.setTextColor(primary)
         targets.appearanceButton.imageTintList = ColorStateList.valueOf(primary)
+        targets.appearanceButton.background = roundedGlassSurface(
+            fillColor = withAlpha(Color.WHITE, if (isNightMode()) 48 else 142),
+            strokeColor = withAlpha(if (isNightMode()) Color.WHITE else preset.accent, 76),
+            preset = preset,
+            cornerDp = 8,
+        )
+        targets.statusPill.background = roundedGlassSurface(
+            fillColor = withAlpha(if (isNightMode()) Color.WHITE else surfaceBaseColor(), if (isNightMode()) 42 else 156),
+            strokeColor = withAlpha(preset.accent, 118),
+            preset = preset,
+            cornerDp = 16,
+        )
         targets.statusPill.setTextColor(preset.accent)
     }
 
@@ -185,16 +214,18 @@ class AppearanceApplier(
             card.setStrokeColor(strokeColor)
             card.strokeWidth = context.dp(1)
             card.cardElevation = 0f
+            card.foreground = glassForeground(preset, 8)
         }
 
         targets.glassPanels.forEach { panel ->
-            panel.background = roundedSurface(surfaceColor, strokeColor)
+            panel.background = roundedGlassSurface(surfaceColor, strokeColor, preset, 8)
         }
 
         targets.primaryButtons.forEach { button ->
             button.backgroundTintList = ColorStateList.valueOf(primaryButtonColor)
             button.strokeColor = ColorStateList.valueOf(strokeColor)
             button.strokeWidth = context.dp(1)
+            button.rippleColor = ColorStateList.valueOf(withAlpha(Color.WHITE, 58))
             button.setTextColor(accentTextColor)
             button.iconTint = ColorStateList.valueOf(accentTextColor)
         }
@@ -203,6 +234,7 @@ class AppearanceApplier(
             button.backgroundTintList = ColorStateList.valueOf(secondaryButtonColor)
             button.strokeColor = ColorStateList.valueOf(strokeColor)
             button.strokeWidth = context.dp(1)
+            button.rippleColor = ColorStateList.valueOf(withAlpha(preset.accent, 46))
             button.setTextColor(textColor)
             button.iconTint = ColorStateList.valueOf(textColor)
         }
@@ -211,6 +243,7 @@ class AppearanceApplier(
             button.backgroundTintList = ColorStateList.valueOf(dangerButtonColor)
             button.strokeColor = ColorStateList.valueOf(withAlpha(context.getColor(R.color.danger), 170))
             button.strokeWidth = context.dp(1)
+            button.rippleColor = ColorStateList.valueOf(withAlpha(Color.WHITE, 54))
             button.setTextColor(Color.WHITE)
             button.iconTint = ColorStateList.valueOf(Color.WHITE)
         }
@@ -229,13 +262,53 @@ class AppearanceApplier(
         return withAlpha(if (isNightMode()) Color.WHITE else preset.accent, alpha)
     }
 
-    private fun roundedSurface(fillColor: Int, strokeColor: Int): GradientDrawable {
-        return GradientDrawable().apply {
+    private fun roundedGlassSurface(
+        fillColor: Int,
+        strokeColor: Int,
+        preset: AppearancePreset,
+        cornerDp: Int,
+    ): LayerDrawable {
+        val radius = context.dp(cornerDp).toFloat()
+        val base = GradientDrawable().apply {
             shape = GradientDrawable.RECTANGLE
-            cornerRadius = context.dp(8).toFloat()
+            cornerRadius = radius
             setColor(fillColor)
             setStroke(context.dp(1), strokeColor)
         }
+        val topLight = GradientDrawable(
+            GradientDrawable.Orientation.TOP_BOTTOM,
+            intArrayOf(withAlpha(Color.WHITE, 42), withAlpha(Color.WHITE, 8), Color.TRANSPARENT),
+        ).apply {
+            shape = GradientDrawable.RECTANGLE
+            cornerRadius = radius
+        }
+        val edgeTint = GradientDrawable(
+            GradientDrawable.Orientation.TL_BR,
+            intArrayOf(withAlpha(Color.WHITE, 28), Color.TRANSPARENT, withAlpha(preset.accent, 24)),
+        ).apply {
+            shape = GradientDrawable.RECTANGLE
+            cornerRadius = radius
+        }
+        return LayerDrawable(arrayOf(base, edgeTint, topLight))
+    }
+
+    private fun glassForeground(preset: AppearancePreset, cornerDp: Int): LayerDrawable {
+        val radius = context.dp(cornerDp).toFloat()
+        val surfaceGlint = GradientDrawable(
+            GradientDrawable.Orientation.TL_BR,
+            intArrayOf(withAlpha(Color.WHITE, 34), Color.TRANSPARENT, withAlpha(preset.accent, 18)),
+        ).apply {
+            shape = GradientDrawable.RECTANGLE
+            cornerRadius = radius
+        }
+        val topEdge = GradientDrawable(
+            GradientDrawable.Orientation.TOP_BOTTOM,
+            intArrayOf(withAlpha(Color.WHITE, 30), Color.TRANSPARENT),
+        ).apply {
+            shape = GradientDrawable.RECTANGLE
+            cornerRadius = radius
+        }
+        return LayerDrawable(arrayOf(surfaceGlint, topEdge))
     }
 
     private fun surfaceBaseColor(): Int {
