@@ -31,7 +31,7 @@ class GlassMotionController(private val context: Context) {
     private var ambientAnimator: ObjectAnimator? = null
     private var statusPulse: AnimatorSet? = null
     private var statusPulseView: View? = null
-    private var progressAnimator: ObjectAnimator? = null
+    private val progressAnimators = mutableMapOf<View, ObjectAnimator>()
 
     private val settleInterpolator = DecelerateInterpolator(1.7f)
     private val entranceInterpolator = OvershootInterpolator(0.68f)
@@ -235,15 +235,14 @@ class GlassMotionController(private val context: Context) {
     }
 
     fun animateProgress(progressBar: ProgressBar, target: Int) {
-        progressAnimator?.cancel()
-        progressAnimator = null
+        progressAnimators.remove(progressBar)?.cancel()
 
         if (!animationsEnabled()) {
             progressBar.progress = target.coerceIn(0, progressBar.max)
             return
         }
 
-        progressAnimator = ObjectAnimator.ofInt(
+        progressAnimators[progressBar] = ObjectAnimator.ofInt(
             progressBar,
             "progress",
             progressBar.progress,
@@ -310,7 +309,8 @@ class GlassMotionController(private val context: Context) {
         stopAmbientSheen()
         statusPulse?.cancel()
         statusPulseView = null
-        progressAnimator?.cancel()
+        progressAnimators.values.forEach { it.cancel() }
+        progressAnimators.clear()
     }
 
     private fun Context.dp(value: Int): Int {

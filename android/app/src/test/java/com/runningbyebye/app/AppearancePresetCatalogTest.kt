@@ -22,6 +22,18 @@ class AppearancePresetCatalogTest {
     fun presetCatalogContainsTheExpectedCoreOptions() {
         val ids = AppearancePresetCatalog.all().map { it.id }
 
-        assertTrue(ids.containsAll(listOf("aurora", "midnight", "glacier", "graphite")))
+        assertTrue(
+            ids.containsAll(
+                listOf(
+                    "aurora",
+                    "midnight",
+                    "glacier",
+                    "graphite",
+                    "sunset",
+                    "sakura",
+                    "night-contrast",
+                ),
+            ),
+        )
     }
 }

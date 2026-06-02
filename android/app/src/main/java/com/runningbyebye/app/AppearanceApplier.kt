@@ -19,6 +19,7 @@ import android.widget.TextView
 import androidx.core.view.WindowInsetsControllerCompat
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
+import com.google.android.material.progressindicator.CircularProgressIndicator
 
 data class AppearanceTargets(
     val root: View,
@@ -34,6 +35,7 @@ data class AppearanceTargets(
     val dangerButtons: List<MaterialButton>,
     val statusPill: TextView,
     val progressBar: ProgressBar,
+    val circularProgress: CircularProgressIndicator,
 )
 
 class AppearanceApplier(
@@ -159,13 +161,8 @@ class AppearanceApplier(
         val controller = WindowInsetsControllerCompat(window, root)
         controller.isAppearanceLightStatusBars = useDarkIcons
         controller.isAppearanceLightNavigationBars = useDarkIcons
-        val systemBarColor = if (customBackgroundVisible) {
-            preset.backgroundStart
-        } else {
-            preset.backgroundEnd
-        }
-        window.statusBarColor = systemBarColor
-        window.navigationBarColor = systemBarColor
+        window.statusBarColor = Color.TRANSPARENT
+        window.navigationBarColor = withAlpha(preset.backgroundEnd, if (customBackgroundVisible) 210 else 128)
     }
 
     private fun applyHeader(
@@ -251,6 +248,8 @@ class AppearanceApplier(
 
         targets.progressBar.progressTintList = ColorStateList.valueOf(preset.accent)
         targets.progressBar.progressBackgroundTintList = ColorStateList.valueOf(withAlpha(preset.accent, 48))
+        targets.circularProgress.setIndicatorColor(preset.accent)
+        targets.circularProgress.trackColor = withAlpha(preset.accent, 48)
     }
 
     private fun surfaceColor(config: AppearanceConfig): Int {

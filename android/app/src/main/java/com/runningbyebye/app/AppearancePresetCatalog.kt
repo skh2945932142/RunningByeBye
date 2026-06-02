@@ -53,6 +53,36 @@ object AppearancePresetCatalog {
             accent = 0xFF85E3C1.toInt(),
             surfaceTint = 0xFFD7F5EB.toInt(),
         ),
+        AppearancePreset(
+            id = "sunset",
+            title = "夕阳",
+            backgroundStart = 0xFF2A1511.toInt(),
+            backgroundEnd = 0xFF6B3324.toInt(),
+            glowStart = 0xFFFFB36B.toInt(),
+            glowEnd = 0xFFFF6F61.toInt(),
+            accent = 0xFFFFB36B.toInt(),
+            surfaceTint = 0xFFFFE0C2.toInt(),
+        ),
+        AppearancePreset(
+            id = "sakura",
+            title = "樱花",
+            backgroundStart = 0xFFFFEEF4.toInt(),
+            backgroundEnd = 0xFFE6F1F4.toInt(),
+            glowStart = 0xFFFF8FB7.toInt(),
+            glowEnd = 0xFF72C8D6.toInt(),
+            accent = 0xFFC24572.toInt(),
+            surfaceTint = 0xFFFFFFFF.toInt(),
+        ),
+        AppearancePreset(
+            id = "night-contrast",
+            title = "高对比",
+            backgroundStart = 0xFF050708.toInt(),
+            backgroundEnd = 0xFF11171A.toInt(),
+            glowStart = 0xFFFFD84D.toInt(),
+            glowEnd = 0xFF57E6FF.toInt(),
+            accent = 0xFFFFD84D.toInt(),
+            surfaceTint = 0xFFF8FBFF.toInt(),
+        ),
     )
 
     fun all(): List<AppearancePreset> = presets

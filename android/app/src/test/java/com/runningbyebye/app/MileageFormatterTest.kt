@@ -14,4 +14,10 @@ class MileageFormatterTest {
     fun formatsMileageNumberForNotificationWithoutUnit() {
         assertEquals("2.346", MileageFormatter.formatKmValue(2.34567))
     }
+
+    @Test
+    fun formatsAnimatedMileageTargets() {
+        assertEquals("0.420", MileageFormatter.formatKmValue(0.42))
+        assertEquals("12.000", MileageFormatter.formatKmValue(12.0))
+    }
 }

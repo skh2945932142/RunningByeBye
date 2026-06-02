@@ -268,6 +268,21 @@
                     android:textColor="@color/text_secondary"
                     android:textSize="12sp" />
 
+                <HorizontalScrollView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:clipToPadding="false"
+                    android:overScrollMode="never"
+                    android:scrollbars="none">
+
+                    <LinearLayout
+                        android:id="@+id/groupFieldCards"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal" />
+                </HorizontalScrollView>
+
                 <Spinner
                     android:id="@+id/spinnerField"
                     android:layout_width="match_parent"
@@ -275,7 +290,8 @@
                     android:layout_marginTop="5dp"
                     android:background="@drawable/bg_spinner"
                     android:paddingStart="10dp"
-                    android:paddingEnd="10dp" />
+                    android:paddingEnd="10dp"
+                    android:visibility="gone" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -415,7 +431,64 @@
                         android:layout_marginTop="12dp"
                         android:orientation="horizontal">
 
+                        <FrameLayout
+                            android:layout_width="132dp"
+                            android:layout_height="132dp"
+                            android:layout_marginEnd="12dp">
+
+                            <com.google.android.material.progressindicator.CircularProgressIndicator
+                                android:id="@+id/circularProgress"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:layout_gravity="center"
+                                android:max="100"
+                                android:progress="0"
+                                app:indicatorColor="@color/primary"
+                                app:indicatorInset="4dp"
+                                app:indicatorSize="124dp"
+                                app:trackColor="@color/progress_track"
+                                app:trackThickness="8dp" />
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:gravity="center"
+                                android:orientation="vertical">
+
+                                <TextView
+                                    android:id="@+id/tvMileage"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:gravity="center"
+                                    android:maxLines="1"
+                                    android:text="0.000"
+                                    android:textColor="@color/primary"
+                                    android:textSize="34sp"
+                                    android:textStyle="bold" />
+
+                                <TextView
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:gravity="center"
+                                    android:text="km"
+                                    android:textColor="@color/text_secondary"
+                                    android:textSize="12sp"
+                                    android:textStyle="bold" />
+                            </LinearLayout>
+                        </FrameLayout>
+
                         <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal">
+
+                                <LinearLayout
                             android:id="@+id/panelProgressMetric"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
@@ -445,11 +518,10 @@
                         </LinearLayout>
 
                         <LinearLayout
-                            android:id="@+id/panelMileageMetric"
+                            android:id="@+id/panelFieldMetric"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_marginStart="5dp"
-                            android:layout_marginEnd="5dp"
                             android:layout_weight="1"
                             android:background="@drawable/bg_metric_glass"
                             android:minHeight="72dp"
@@ -459,26 +531,33 @@
                             <TextView
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:text="里程"
+                                android:text="场地"
                                 android:textColor="@color/text_secondary"
                                 android:textSize="12sp" />
 
                             <TextView
-                                android:id="@+id/tvMileage"
+                                android:id="@+id/tvFieldName"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:text="0.000 km"
+                                android:text="风华"
                                 android:textColor="@color/primary"
                                 android:textSize="18sp"
                                 android:maxLines="1"
                                 android:textStyle="bold" />
                         </LinearLayout>
+                            </LinearLayout>
 
-                        <LinearLayout
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="10dp"
+                                android:orientation="horizontal">
+
+                                <LinearLayout
                             android:id="@+id/panelPointsMetric"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="5dp"
+                            android:layout_marginEnd="5dp"
                             android:layout_weight="1"
                             android:background="@drawable/bg_metric_glass"
                             android:minHeight="72dp"
@@ -502,6 +581,75 @@
                                 android:maxLines="1"
                                 android:textStyle="bold" />
                         </LinearLayout>
+
+                                <LinearLayout
+                                    android:id="@+id/panelPaceMetric"
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginStart="5dp"
+                                    android:layout_weight="1"
+                                    android:background="@drawable/bg_metric_glass"
+                                    android:minHeight="72dp"
+                                    android:orientation="vertical"
+                                    android:padding="10dp">
+
+                                    <TextView
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:text="配速"
+                                        android:textColor="@color/text_secondary"
+                                        android:textSize="12sp" />
+
+                                    <TextView
+                                        android:id="@+id/tvPaceMetric"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:maxLines="1"
+                                        android:text="0 min"
+                                        android:textColor="@color/primary"
+                                        android:textSize="18sp"
+                                        android:textStyle="bold" />
+                                </LinearLayout>
+                            </LinearLayout>
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/cardRunSummary"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:background="@drawable/bg_metric_glass"
+                        android:orientation="vertical"
+                        android:padding="12dp"
+                        android:visibility="gone">
+
+                        <TextView
+                            android:id="@+id/tvSummaryTitle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="本次摘要"
+                            android:textColor="@color/text_primary"
+                            android:textSize="15sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/tvSummaryMileage"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="6dp"
+                            android:text="0.000 km"
+                            android:textColor="@color/primary"
+                            android:textSize="28sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/tvSummaryDetails"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="13sp" />
                     </LinearLayout>
                 </LinearLayout>
 

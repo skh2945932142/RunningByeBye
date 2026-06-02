@@ -25,8 +25,8 @@ android {
         applicationId = "com.runningbyebye.app"
         minSdk = 24
         targetSdk = 34
-        versionCode = 3
-        versionName = "1.1.1"
+        versionCode = 4
+        versionName = "1.1.2"
 
         ndk {
             abiFilters += listOf("arm64-v8a", "armeabi-v7a")
@@ -82,4 +82,5 @@ dependencies {
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
 
     testImplementation("junit:junit:4.13.2")
+    testImplementation("org.json:json:20240303")
 }

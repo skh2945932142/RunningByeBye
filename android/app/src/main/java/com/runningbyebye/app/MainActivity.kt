@@ -1,10 +1,13 @@
 package com.runningbyebye.app
 
 import android.Manifest
+import android.animation.ArgbEvaluator
+import android.animation.ValueAnimator
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.ColorStateList
 import android.graphics.Color
+import android.graphics.Typeface
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -12,6 +15,7 @@ import android.os.Handler
 import android.os.Looper
 import android.transition.TransitionManager
 import android.view.Gravity
+import android.view.HapticFeedbackConstants
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
@@ -25,18 +29,27 @@ import android.widget.SeekBar
 import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.motion.widget.MotionLayout
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.progressindicator.CircularProgressIndicator
 import com.google.android.material.textfield.TextInputEditText
 import org.json.JSONObject
 import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class MainActivity : AppCompatActivity() {
 
@@ -53,6 +66,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var etOpenID: TextInputEditText
     private lateinit var btnLogin: MaterialButton
     private lateinit var btnEditOpenId: MaterialButton
+    private lateinit var groupFieldCards: LinearLayout
     private lateinit var spinnerField: Spinner
     private lateinit var etPace: TextInputEditText
     private lateinit var etInterval: TextInputEditText
@@ -67,13 +81,21 @@ class MainActivity : AppCompatActivity() {
     private lateinit var cardProgress: MaterialCardView
     private lateinit var tvStatus: TextView
     private lateinit var progressBar: ProgressBar
+    private lateinit var circularProgress: CircularProgressIndicator
     private lateinit var panelProgressMetric: LinearLayout
-    private lateinit var panelMileageMetric: LinearLayout
+    private lateinit var panelFieldMetric: LinearLayout
     private lateinit var panelPointsMetric: LinearLayout
+    private lateinit var panelPaceMetric: LinearLayout
     private lateinit var progressSheen: View
     private lateinit var tvProgress: TextView
     private lateinit var tvMileage: TextView
     private lateinit var tvPoints: TextView
+    private lateinit var tvFieldName: TextView
+    private lateinit var tvPaceMetric: TextView
+    private lateinit var cardRunSummary: LinearLayout
+    private lateinit var tvSummaryTitle: TextView
+    private lateinit var tvSummaryMileage: TextView
+    private lateinit var tvSummaryDetails: TextView
     private lateinit var groupActions: LinearLayout
 
     private var runner: mobile.Runner? = null
@@ -84,6 +106,13 @@ class MainActivity : AppCompatActivity() {
     private lateinit var backgroundPickerLauncher: ActivityResultLauncher<Array<String>>
     private var appearanceConfig = AppearanceConfig()
     private var loggedInOpenID: String? = null
+    private var selectedFieldIndex = 0
+    private var lastRunningFieldName = ""
+    private var lastSubmittedPoints = 0
+    private var lastTotalPoints = 0
+    private var displayedMileage = 0.0
+    private var mileageAnimator: ValueAnimator? = null
+    private val milestoneTracker = ProgressMilestoneTracker()
     private val handler = Handler(Looper.getMainLooper())
     private var lastTerminalStatus: RunStatus? = null
     private val runStatusObserver = RunStatusObserver { status ->
@@ -91,11 +120,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     // 场地映射
-    private val fieldCodes = arrayOf("T1001", "T1005", "T1014")
-    private val fieldNames = arrayOf("风华运动场", "太极运动场", "宁静苑")
+    private val fieldCodes = FieldCatalog.options.map { it.code }.toTypedArray()
+    private val fieldNames = FieldCatalog.options.map { it.name }.toTypedArray()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        WindowCompat.setDecorFitsSystemWindows(window, false)
         setContentView(R.layout.activity_main)
 
         runOptionsStore = RunOptionsStore.from(this)
@@ -108,6 +138,8 @@ class MainActivity : AppCompatActivity() {
         setupSpinner()
         setupListeners()
         restoreSavedOptions()
+        setupFieldCards()
+        setupBackHandling()
         applyAppearance()
         setupMotion()
 
@@ -148,6 +180,7 @@ class MainActivity : AppCompatActivity() {
         etOpenID = findViewById(R.id.etOpenID)
         btnLogin = findViewById(R.id.btnLogin)
         btnEditOpenId = findViewById(R.id.btnEditOpenId)
+        groupFieldCards = findViewById(R.id.groupFieldCards)
         spinnerField = findViewById(R.id.spinnerField)
         etPace = findViewById(R.id.etPace)
         etInterval = findViewById(R.id.etInterval)
@@ -162,14 +195,23 @@ class MainActivity : AppCompatActivity() {
         cardProgress = findViewById(R.id.cardProgress)
         tvStatus = findViewById(R.id.tvStatus)
         progressBar = findViewById(R.id.progressBar)
+        circularProgress = findViewById(R.id.circularProgress)
         panelProgressMetric = findViewById(R.id.panelProgressMetric)
-        panelMileageMetric = findViewById(R.id.panelMileageMetric)
+        panelFieldMetric = findViewById(R.id.panelFieldMetric)
         panelPointsMetric = findViewById(R.id.panelPointsMetric)
+        panelPaceMetric = findViewById(R.id.panelPaceMetric)
         progressSheen = findViewById(R.id.progressSheen)
         tvProgress = findViewById(R.id.tvProgress)
         tvMileage = findViewById(R.id.tvMileage)
         tvPoints = findViewById(R.id.tvPoints)
+        tvFieldName = findViewById(R.id.tvFieldName)
+        tvPaceMetric = findViewById(R.id.tvPaceMetric)
+        cardRunSummary = findViewById(R.id.cardRunSummary)
+        tvSummaryTitle = findViewById(R.id.tvSummaryTitle)
+        tvSummaryMileage = findViewById(R.id.tvSummaryMileage)
+        tvSummaryDetails = findViewById(R.id.tvSummaryDetails)
         groupActions = findViewById(R.id.groupActions)
+        applyEdgeToEdgeInsets()
     }
 
     private fun setupSpinner() {
@@ -210,7 +252,9 @@ class MainActivity : AppCompatActivity() {
         etInterval.setText(options.intervalSeconds)
 
         val fieldIndex = fieldCodes.indexOf(options.fieldCode).takeIf { it >= 0 } ?: 0
+        selectedFieldIndex = fieldIndex
         spinnerField.setSelection(fieldIndex)
+        updateSelectedFieldViews(animate = false)
     }
 
     private fun applyAppearance() {
@@ -225,19 +269,202 @@ class MainActivity : AppCompatActivity() {
                 cards = listOf(cardLogin, cardParams, cardProgress),
                 glassPanels = listOf(
                     cardUserInfo,
-                    spinnerField,
                     panelProgressMetric,
-                    panelMileageMetric,
+                    panelFieldMetric,
                     panelPointsMetric,
+                    panelPaceMetric,
+                    cardRunSummary,
                 ),
                 primaryButtons = listOf(btnLogin, btnStart),
                 secondaryButtons = listOf(btnEditOpenId),
                 dangerButtons = listOf(btnStop),
                 statusPill = tvStatusPill,
                 progressBar = progressBar,
+                circularProgress = circularProgress,
             ),
             appearanceConfig,
         )
+        setupFieldCards()
+    }
+
+    private fun applyEdgeToEdgeInsets() {
+        val baseStart = rootContent.paddingStart
+        val baseTop = rootContent.paddingTop
+        val baseEnd = rootContent.paddingEnd
+        val baseBottom = rootContent.paddingBottom
+        ViewCompat.setOnApplyWindowInsetsListener(rootContent) { view, insets ->
+            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            view.setPadding(
+                baseStart,
+                baseTop + bars.top,
+                baseEnd,
+                baseBottom + bars.bottom,
+            )
+            insets
+        }
+        ViewCompat.requestApplyInsets(rootContent)
+    }
+
+    private fun setupBackHandling() {
+        onBackPressedDispatcher.addCallback(
+            this,
+            object : OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() {
+                    val running = RunServiceState.current() is RunStatus.Running ||
+                        RunServiceState.current() is RunStatus.Progress ||
+                        btnStop.isEnabled
+                    if (!running) {
+                        isEnabled = false
+                        onBackPressedDispatcher.onBackPressed()
+                        return
+                    }
+                    showStopRunningConfirm()
+                }
+            },
+        )
+    }
+
+    private fun showStopRunningConfirm() {
+        MaterialAlertDialogBuilder(this)
+            .setTitle("正在跑步")
+            .setMessage("退出前是否停止当前跑步？")
+            .setPositiveButton("停止跑步") { _, _ ->
+                rootContainer.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+                doStopRun()
+            }
+            .setNegativeButton("继续跑步", null)
+            .show()
+    }
+
+    private fun setupFieldCards() {
+        groupFieldCards.removeAllViews()
+        val preset = AppearancePresetCatalog.find(appearanceConfig.presetId)
+        FieldCatalog.options.forEachIndexed { index, option ->
+            val summary = loadFieldSummary(option)
+            val card = createFieldCard(summary, index, preset)
+            groupFieldCards.addView(card)
+        }
+        updateSelectedFieldViews(animate = false)
+    }
+
+    private fun createFieldCard(
+        summary: FieldSummary,
+        index: Int,
+        preset: AppearancePreset,
+    ): LinearLayout {
+        val selected = index == selectedFieldIndex
+        val title = TextView(this).apply {
+            text = summary.option.name
+            setTextColor(ContextCompat.getColor(this@MainActivity, R.color.text_primary))
+            textSize = 14f
+            typeface = Typeface.DEFAULT_BOLD
+            maxLines = 1
+        }
+        val track = FieldTrackView(this).apply {
+            setTrack(summary.points, preset.accent)
+        }
+        val meta = TextView(this).apply {
+            text = "${summary.pointCount} 点 · ${MileageFormatter.formatKm(summary.distanceKm)}"
+            setTextColor(ContextCompat.getColor(this@MainActivity, R.color.text_secondary))
+            textSize = 12f
+            maxLines = 1
+        }
+
+        return LinearLayout(this).apply {
+            tag = FIELD_CARD_TAG_PREFIX + index
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER_VERTICAL
+            minimumHeight = dp(112)
+            setPadding(dp(12), dp(10), dp(12), dp(10))
+            background = createFieldCardBackground(preset, selected)
+            scaleX = if (selected) 1.02f else 1f
+            scaleY = if (selected) 1.02f else 1f
+            isClickable = true
+            isFocusable = true
+            addView(
+                title,
+                LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                ),
+            )
+            addView(
+                track,
+                LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    dp(52),
+                ).apply {
+                    topMargin = dp(6)
+                },
+            )
+            addView(
+                meta,
+                LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                ).apply {
+                    topMargin = dp(4)
+                },
+            )
+            setOnClickListener {
+                selectField(index, animate = true)
+            }
+            motionController.bindPressFeedback(GlassMotionController.PressFeedbackStyle.PANEL, this)
+            layoutParams = LinearLayout.LayoutParams(dp(152), ViewGroup.LayoutParams.WRAP_CONTENT).apply {
+                marginEnd = dp(8)
+            }
+        }
+    }
+
+    private fun loadFieldSummary(option: FieldOption): FieldSummary {
+        val dir = "${FieldCatalog.POINTS_ASSET_ROOT}/${option.code}"
+        val firstJson = try {
+            assets.list(dir)
+                ?.filter { it.endsWith(".json", ignoreCase = true) }
+                ?.sorted()
+                ?.firstOrNull()
+        } catch (_: Exception) {
+            null
+        }
+        return FieldPointParser.summarize(option) {
+            firstJson?.let { assets.open("$dir/$it") }
+        }
+    }
+
+    private fun createFieldCardBackground(preset: AppearancePreset, selected: Boolean): android.graphics.drawable.GradientDrawable {
+        return android.graphics.drawable.GradientDrawable().apply {
+            shape = android.graphics.drawable.GradientDrawable.RECTANGLE
+            cornerRadius = dp(8).toFloat()
+            setColor(withAlpha(preset.surfaceTint, if (selected) 112 else 58))
+            setStroke(dp(if (selected) 2 else 1), withAlpha(preset.accent, if (selected) 232 else 104))
+        }
+    }
+
+    private fun selectField(index: Int, animate: Boolean) {
+        selectedFieldIndex = index.coerceIn(fieldCodes.indices)
+        spinnerField.setSelection(selectedFieldIndex)
+        updateSelectedFieldViews(animate)
+    }
+
+    private fun updateSelectedFieldViews(animate: Boolean) {
+        if (!::groupFieldCards.isInitialized) {
+            return
+        }
+        val preset = AppearancePresetCatalog.find(appearanceConfig.presetId)
+        groupFieldCards.childrenList().forEachIndexed { index, child ->
+            val selected = index == selectedFieldIndex
+            child.background = createFieldCardBackground(preset, selected)
+            child.animate()
+                .scaleX(if (selected) 1.02f else 1f)
+                .scaleY(if (selected) 1.02f else 1f)
+                .setDuration(if (animate) 170L else 0L)
+                .start()
+        }
+        val fieldName = fieldNames.getOrElse(selectedFieldIndex) { fieldNames.first() }
+        tvFieldName.text = shortFieldName(fieldName)
+        if (animate) {
+            groupFieldCards.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+        }
     }
 
     private fun saveAndApplyAppearance(config: AppearanceConfig) {
@@ -527,7 +754,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun doStartRun() {
         val openID = loggedInOpenID ?: return
-        val fieldIndex = spinnerField.selectedItemPosition
+        val fieldIndex = selectedFieldIndex.coerceIn(fieldCodes.indices)
         val fieldCode = fieldCodes[fieldIndex]
         val paceResult = RunInputValidator.resolvePace(etPace.text?.toString())
         if (!paceResult.isValid) {
@@ -551,8 +778,16 @@ class MainActivity : AppCompatActivity() {
         btnLogin.isEnabled = false
         btnEditOpenId.isEnabled = false
         btnStop.isEnabled = true
+        lastRunningFieldName = fieldNames[fieldIndex]
+        lastSubmittedPoints = 0
+        lastTotalPoints = 0
+        displayedMileage = 0.0
+        milestoneTracker.reset()
         showProgressCard()
+        hideRunSummary()
+        resetDashboard(pace)
         setStatusText("跑步中...", R.color.success, "跑步中")
+        rootContainer.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
 
         try {
             RunForegroundService.startRun(
@@ -569,6 +804,8 @@ class MainActivity : AppCompatActivity() {
             lastTerminalStatus = null
         } catch (e: Exception) {
             setStatusText("启动失败: ${e.message}", R.color.danger, "失败")
+            showRunSummary("启动失败", 0.0, e.message ?: "未知错误", danger = true)
+            rootContainer.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
             btnStart.isEnabled = true
             btnLogin.isEnabled = true
             btnEditOpenId.isEnabled = true
@@ -579,11 +816,12 @@ class MainActivity : AppCompatActivity() {
     private fun doStopRun() {
         RunForegroundService.stopRun(this)
         setStatusText("正在停止...", R.color.danger, "停止中")
+        rootContainer.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
         btnStop.isEnabled = false
     }
 
     private fun saveCurrentOptions(openID: String) {
-        val rawFieldIndex = spinnerField.selectedItemPosition
+        val rawFieldIndex = selectedFieldIndex
         val fieldIndex = if (rawFieldIndex in fieldCodes.indices) rawFieldIndex else 0
         val pace = RunInputValidator.resolvePace(etPace.text?.toString()).value.ifEmpty { RunOptionsStore.DEFAULT_PACE }
         val interval = RunInputValidator.resolveIntervalSeconds(etInterval.text?.toString()).value.ifEmpty { RunOptionsStore.DEFAULT_INTERVAL_SECONDS }
@@ -609,33 +847,47 @@ class MainActivity : AppCompatActivity() {
                 btnStart.isEnabled = loggedInOpenID != null
                 btnEditOpenId.isEnabled = true
                 btnStop.isEnabled = false
-                tvStatusPill.text = if (loggedInOpenID == null) "未登录" else "待开始"
+                updateStatusPill(if (loggedInOpenID == null) "未登录" else "待开始", getColor(R.color.primary))
             }
 
             is RunStatus.Running -> {
                 showProgressCard()
+                hideRunSummary()
                 motionController.setStatusPulse(tvStatusPill, true)
                 setStatusText("跑步中... ${status.fieldName}", R.color.success, "跑步中")
                 btnLogin.isEnabled = false
                 btnEditOpenId.isEnabled = false
                 btnStart.isEnabled = false
                 btnStop.isEnabled = true
+                lastRunningFieldName = status.fieldName
+                tvFieldName.text = shortFieldName(status.fieldName)
+                tvPaceMetric.text = "${etPace.text} min"
                 lastTerminalStatus = null
             }
 
             is RunStatus.Progress -> {
                 val percent = if (status.total > 0) status.submitted * 100 / status.total else 0
                 showProgressCard()
+                hideRunSummary()
                 motionController.setStatusPulse(tvStatusPill, true)
                 setStatusText("跑步中...", R.color.success, "跑步中")
                 motionController.animateProgress(progressBar, percent)
+                motionController.animateProgress(circularProgress, percent)
                 tvProgress.text = "$percent%"
-                tvMileage.text = MileageFormatter.formatKm(status.mileage)
+                animateMileage(status.mileage)
                 tvPoints.text = "${status.submitted}/${status.total}"
+                lastSubmittedPoints = status.submitted
+                lastTotalPoints = status.total
+                tvPaceMetric.text = "${etPace.text} min"
                 btnLogin.isEnabled = false
                 btnEditOpenId.isEnabled = false
                 btnStart.isEnabled = false
                 btnStop.isEnabled = true
+                milestoneTracker.hit(percent)?.let {
+                    rootContainer.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
+                    motionController.playProgressSheen(progressSheen)
+                    pulseProgressMetrics()
+                }
                 pulseProgressMetrics()
             }
 
@@ -644,9 +896,17 @@ class MainActivity : AppCompatActivity() {
                 motionController.setStatusPulse(tvStatusPill, false)
                 setStatusText("跑步完成!", R.color.success, "完成")
                 motionController.animateProgress(progressBar, 100)
+                motionController.animateProgress(circularProgress, 100)
                 motionController.playProgressSheen(progressSheen)
                 tvProgress.text = "100%"
-                tvMileage.text = MileageFormatter.formatKm(status.mileage)
+                animateMileage(status.mileage)
+                showRunSummary(
+                    title = "跑步完成",
+                    mileage = status.mileage,
+                    details = terminalSummaryDetails("完成"),
+                    danger = false,
+                )
+                rootContainer.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
                 btnLogin.isEnabled = true
                 btnEditOpenId.isEnabled = true
                 btnStart.isEnabled = loggedInOpenID != null
@@ -658,6 +918,13 @@ class MainActivity : AppCompatActivity() {
                 showProgressCard()
                 motionController.setStatusPulse(tvStatusPill, false)
                 setStatusText("失败: ${status.message}", R.color.danger, "失败")
+                showRunSummary(
+                    title = "跑步失败",
+                    mileage = displayedMileage,
+                    details = terminalSummaryDetails(status.message),
+                    danger = true,
+                )
+                rootContainer.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
                 btnLogin.isEnabled = true
                 btnEditOpenId.isEnabled = true
                 btnStart.isEnabled = loggedInOpenID != null
@@ -669,6 +936,13 @@ class MainActivity : AppCompatActivity() {
                 showProgressCard()
                 motionController.setStatusPulse(tvStatusPill, false)
                 setStatusText(status.message, R.color.danger, "已停止")
+                showRunSummary(
+                    title = "已停止",
+                    mileage = displayedMileage,
+                    details = terminalSummaryDetails(status.message),
+                    danger = true,
+                )
+                rootContainer.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
                 btnLogin.isEnabled = true
                 btnEditOpenId.isEnabled = true
                 btnStart.isEnabled = loggedInOpenID != null
@@ -684,7 +958,7 @@ class MainActivity : AppCompatActivity() {
         tvUserInfo.text = "${info.optString("student_no")} · ${info.optString("dept_name")}"
         cardUserInfo.visibility = View.VISIBLE
         groupOpenIdInput.visibility = View.GONE
-        tvStatusPill.text = "待开始"
+        updateStatusPill("待开始", getColor(R.color.primary))
         animateAppear(cardUserInfo)
     }
 
@@ -692,7 +966,7 @@ class MainActivity : AppCompatActivity() {
         TransitionManager.beginDelayedTransition(rootContent)
         groupOpenIdInput.visibility = View.VISIBLE
         etOpenID.requestFocus()
-        tvStatusPill.text = if (loggedInOpenID == null) "未登录" else "已登录"
+        updateStatusPill(if (loggedInOpenID == null) "未登录" else "已登录", getColor(R.color.primary))
         animateAppear(groupOpenIdInput)
     }
 
@@ -710,8 +984,108 @@ class MainActivity : AppCompatActivity() {
 
     private fun setStatusText(status: String, colorRes: Int, pillText: String) {
         tvStatus.text = status
-        tvStatus.setTextColor(getColor(colorRes))
-        tvStatusPill.text = pillText
+        val color = getColor(colorRes)
+        tvStatus.setTextColor(color)
+        updateStatusPill(pillText, color)
+    }
+
+    private fun updateStatusPill(text: String, color: Int) {
+        val currentColor = tvStatusPill.currentTextColor
+        ValueAnimator.ofObject(ArgbEvaluator(), currentColor, color).apply {
+            duration = 220L
+            addUpdateListener { animator ->
+                tvStatusPill.setTextColor(animator.animatedValue as Int)
+            }
+            start()
+        }
+        if (tvStatusPill.text == text) {
+            return
+        }
+        tvStatusPill.animate()
+            .alpha(0.45f)
+            .setDuration(90L)
+            .withEndAction {
+                tvStatusPill.text = text
+                tvStatusPill.animate()
+                    .alpha(1f)
+                    .setDuration(140L)
+                    .start()
+            }
+            .start()
+    }
+
+    private fun resetDashboard(pace: String) {
+        mileageAnimator?.cancel()
+        displayedMileage = 0.0
+        progressBar.progress = 0
+        circularProgress.progress = 0
+        tvProgress.text = "0%"
+        tvMileage.text = MileageFormatter.formatKmValue(0.0)
+        tvPoints.text = "0/0"
+        tvFieldName.text = shortFieldName(lastRunningFieldName)
+        tvPaceMetric.text = "$pace min"
+    }
+
+    private fun animateMileage(target: Double) {
+        mileageAnimator?.cancel()
+        val start = displayedMileage
+        if (start == target) {
+            tvMileage.text = MileageFormatter.formatKmValue(target)
+            return
+        }
+        mileageAnimator = ValueAnimator.ofFloat(start.toFloat(), target.toFloat()).apply {
+            duration = 620L
+            addUpdateListener { animator ->
+                val value = (animator.animatedValue as Float).toDouble()
+                tvMileage.text = MileageFormatter.formatKmValue(value)
+            }
+            doOnEnd {
+                displayedMileage = target
+                tvMileage.text = MileageFormatter.formatKmValue(target)
+            }
+            start()
+        }
+    }
+
+    private fun showRunSummary(
+        title: String,
+        mileage: Double,
+        details: String,
+        danger: Boolean,
+    ) {
+        TransitionManager.beginDelayedTransition(rootContent)
+        tvSummaryTitle.text = title
+        tvSummaryMileage.text = MileageFormatter.formatKm(mileage)
+        tvSummaryMileage.setTextColor(getColor(if (danger) R.color.danger else R.color.primary))
+        tvSummaryDetails.text = details
+        cardRunSummary.visibility = View.VISIBLE
+        cardRunSummary.post {
+            animateAppear(cardRunSummary)
+        }
+    }
+
+    private fun hideRunSummary() {
+        cardRunSummary.visibility = View.GONE
+    }
+
+    private fun terminalSummaryDetails(status: String): String {
+        val field = lastRunningFieldName.ifBlank { fieldNames.getOrElse(selectedFieldIndex) { fieldNames.first() } }
+        val points = if (lastTotalPoints > 0) {
+            "${lastSubmittedPoints}/${lastTotalPoints} 点"
+        } else {
+            "0/0 点"
+        }
+        return "$field · $points · $status · ${formatCompletionTime()}"
+    }
+
+    private fun formatCompletionTime(): String {
+        return SimpleDateFormat("HH:mm", Locale.CHINA).format(Date())
+    }
+
+    private fun shortFieldName(name: String): String {
+        return name
+            .replace("运动场", "")
+            .ifBlank { name }
     }
 
     private fun animateAppear(view: View) {
@@ -725,7 +1099,22 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun pulseProgressMetrics() {
-        motionController.pulseMetrics(tvProgress, tvMileage, tvPoints)
+        motionController.pulseMetrics(tvProgress, tvMileage, tvPoints, tvFieldName, tvPaceMetric)
+    }
+
+    private fun LinearLayout.childrenList(): List<View> {
+        return List(childCount) { index -> getChildAt(index) }
+    }
+
+    private inline fun ValueAnimator.doOnEnd(crossinline action: () -> Unit) {
+        addListener(
+            object : android.animation.Animator.AnimatorListener {
+                override fun onAnimationStart(animation: android.animation.Animator) = Unit
+                override fun onAnimationEnd(animation: android.animation.Animator) = action()
+                override fun onAnimationCancel(animation: android.animation.Animator) = Unit
+                override fun onAnimationRepeat(animation: android.animation.Animator) = Unit
+            },
+        )
     }
 
     private fun showTerminalToastOnce(status: RunStatus, message: String) {
@@ -738,5 +1127,6 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         private const val REQUEST_NOTIFICATION_PERMISSION = 2001
+        private const val FIELD_CARD_TAG_PREFIX = "field-card-"
     }
 }
