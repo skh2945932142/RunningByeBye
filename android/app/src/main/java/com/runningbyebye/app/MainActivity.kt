@@ -25,7 +25,6 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.ScrollView
-import android.widget.SeekBar
 import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
@@ -44,6 +43,7 @@ import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.progressindicator.CircularProgressIndicator
+import com.google.android.material.slider.Slider
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import org.json.JSONObject
@@ -546,9 +546,9 @@ class MainActivity : AppCompatActivity() {
         val blurValue = sheet.findViewById<TextView>(R.id.tvBlurValue)
         val scrimValue = sheet.findViewById<TextView>(R.id.tvScrimValue)
         val glassValue = sheet.findViewById<TextView>(R.id.tvGlassValue)
-        val blurSeek = sheet.findViewById<SeekBar>(R.id.seekBlurStrength)
-        val scrimSeek = sheet.findViewById<SeekBar>(R.id.seekScrimStrength)
-        val glassSeek = sheet.findViewById<SeekBar>(R.id.seekGlassStrength)
+        val blurSeek = sheet.findViewById<Slider>(R.id.seekBlurStrength)
+        val scrimSeek = sheet.findViewById<Slider>(R.id.seekScrimStrength)
+        val glassSeek = sheet.findViewById<Slider>(R.id.seekGlassStrength)
         val pickButton = sheet.findViewById<MaterialButton>(R.id.btnPickBackground)
         val clearButton = sheet.findViewById<MaterialButton>(R.id.btnClearBackground)
         val resetButton = sheet.findViewById<MaterialButton>(R.id.btnResetAppearance)
@@ -571,12 +571,12 @@ class MainActivity : AppCompatActivity() {
         }
 
         fun syncControls() {
-            blurSeek.progress = appearanceConfig.blurStrength
-            scrimSeek.progress = appearanceConfig.scrimStrength
-            glassSeek.progress = appearanceConfig.glassStrength
+            blurSeek.value = appearanceConfig.blurStrength.toFloat()
+            scrimSeek.value = appearanceConfig.scrimStrength.toFloat()
+            glassSeek.value = appearanceConfig.glassStrength.toFloat()
             syncLabels()
             tintAppearanceSheetControls(
-                seekBars = listOf(blurSeek, scrimSeek, glassSeek),
+                sliders = listOf(blurSeek, scrimSeek, glassSeek),
                 buttons = listOf(pickButton, clearButton, resetButton, closeButton),
             )
             bindPresetButtons(presetGroup) { preset ->
@@ -620,15 +620,16 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun tintAppearanceSheetControls(
-        seekBars: List<SeekBar>,
+        sliders: List<Slider>,
         buttons: List<MaterialButton>,
     ) {
         val preset = AppearancePresetCatalog.find(appearanceConfig.presetId)
         val accent = preset.accent
-        seekBars.forEach { seekBar ->
-            seekBar.progressTintList = ColorStateList.valueOf(accent)
-            seekBar.thumbTintList = ColorStateList.valueOf(accent)
-            seekBar.progressBackgroundTintList = ColorStateList.valueOf(withAlpha(accent, 42))
+        sliders.forEach { slider ->
+            slider.trackActiveTintList = ColorStateList.valueOf(accent)
+            slider.trackInactiveTintList = ColorStateList.valueOf(withAlpha(accent, 42))
+            slider.thumbTintList = ColorStateList.valueOf(accent)
+            slider.haloTintList = ColorStateList.valueOf(withAlpha(accent, 42))
         }
         buttons.forEach { button ->
             button.strokeColor = ColorStateList.valueOf(withAlpha(accent, 112))
@@ -663,17 +664,21 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun SeekBar.onUserProgressChanged(onChange: (Int) -> Unit) {
-        setOnSeekBarChangeListener(
-            object : SeekBar.OnSeekBarChangeListener {
-                override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                    if (fromUser) {
-                        onChange(progress)
-                    }
+    private fun Slider.onUserProgressChanged(onChange: (Int) -> Unit) {
+        addOnChangeListener { _, value, fromUser ->
+            if (fromUser) {
+                onChange(value.toInt())
+            }
+        }
+        addOnSliderTouchListener(
+            object : com.google.android.material.slider.Slider.OnSliderTouchListener {
+                override fun onStartTrackingTouch(slider: Slider) {
+                    slider.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
                 }
 
-                override fun onStartTrackingTouch(seekBar: SeekBar?) = Unit
-                override fun onStopTrackingTouch(seekBar: SeekBar?) = Unit
+                override fun onStopTrackingTouch(slider: Slider) {
+                    slider.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
+                }
             },
         )
     }
