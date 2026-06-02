@@ -14,7 +14,6 @@ import android.view.View
 import android.view.Window
 import android.widget.ImageButton
 import android.widget.ImageView
-import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.core.view.WindowInsetsControllerCompat
 import com.google.android.material.button.MaterialButton
@@ -36,7 +35,7 @@ data class AppearanceTargets(
     val secondaryButtons: List<MaterialButton>,
     val dangerButtons: List<MaterialButton>,
     val statusPill: TextView,
-    val progressBar: ProgressBar,
+    val progressBar: GlassLinearProgressView,
     val circularProgress: CircularProgressIndicator,
     val dashboardHalo: DashboardHaloView,
     val summaryBadge: RunSummaryBadgeView,
@@ -275,8 +274,10 @@ class AppearanceApplier(
             button.iconTint = ColorStateList.valueOf(Color.WHITE)
         }
 
-        targets.progressBar.progressTintList = ColorStateList.valueOf(preset.accent)
-        targets.progressBar.progressBackgroundTintList = ColorStateList.valueOf(withAlpha(preset.accent, 48))
+        targets.progressBar.setPalette(
+            accent = preset.accent,
+            track = withAlpha(preset.accent, 48),
+        )
         targets.circularProgress.setIndicatorColor(preset.accent)
         targets.circularProgress.trackColor = withAlpha(preset.accent, 48)
         targets.dashboardHalo.setPalette(

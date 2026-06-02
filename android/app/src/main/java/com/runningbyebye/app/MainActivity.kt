@@ -23,7 +23,6 @@ import android.widget.GridLayout
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.LinearLayout
-import android.widget.ProgressBar
 import android.widget.ScrollView
 import android.widget.Spinner
 import android.widget.TextView
@@ -84,7 +83,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var cardParams: MaterialCardView
     private lateinit var cardProgress: MaterialCardView
     private lateinit var tvStatus: TextView
-    private lateinit var progressBar: ProgressBar
+    private lateinit var progressBar: GlassLinearProgressView
     private lateinit var dashboardHalo: DashboardHaloView
     private lateinit var circularProgress: CircularProgressIndicator
     private lateinit var panelProgressMetric: LinearLayout
@@ -897,7 +896,7 @@ class MainActivity : AppCompatActivity() {
                 hideRunSummary()
                 motionController.setStatusPulse(tvStatusPill, true)
                 setStatusText("跑步中...", R.color.success, "跑步中")
-                motionController.animateProgress(progressBar, percent)
+                progressBar.setProgressAnimated(percent)
                 motionController.animateProgress(circularProgress, percent)
                 dashboardHalo.setHaloState(percent, active = true)
                 tvProgress.text = "$percent%"
@@ -922,7 +921,7 @@ class MainActivity : AppCompatActivity() {
                 showProgressCard()
                 motionController.setStatusPulse(tvStatusPill, false)
                 setStatusText("跑步完成!", R.color.success, "完成")
-                motionController.animateProgress(progressBar, 100)
+                progressBar.setProgressAnimated(100)
                 motionController.animateProgress(circularProgress, 100)
                 dashboardHalo.setHaloState(100, active = false)
                 motionController.playProgressSheen(progressSheen)
