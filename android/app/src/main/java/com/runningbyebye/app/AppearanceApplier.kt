@@ -39,6 +39,7 @@ data class AppearanceTargets(
     val progressBar: ProgressBar,
     val circularProgress: CircularProgressIndicator,
     val dashboardHalo: DashboardHaloView,
+    val summaryBadge: RunSummaryBadgeView,
 )
 
 class AppearanceApplier(
@@ -281,6 +282,10 @@ class AppearanceApplier(
         targets.dashboardHalo.setPalette(
             accent = preset.accent,
             track = withAlpha(preset.accent, 48),
+            danger = context.getColor(R.color.danger),
+        )
+        targets.summaryBadge.setPalette(
+            accent = preset.accent,
             danger = context.getColor(R.color.danger),
         )
     }

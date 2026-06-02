@@ -98,6 +98,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tvFieldName: TextView
     private lateinit var tvPaceMetric: TextView
     private lateinit var cardRunSummary: LinearLayout
+    private lateinit var summaryBadge: RunSummaryBadgeView
     private lateinit var tvSummaryTitle: TextView
     private lateinit var tvSummaryMileage: TextView
     private lateinit var tvSummaryDetails: TextView
@@ -216,6 +217,7 @@ class MainActivity : AppCompatActivity() {
         tvFieldName = findViewById(R.id.tvFieldName)
         tvPaceMetric = findViewById(R.id.tvPaceMetric)
         cardRunSummary = findViewById(R.id.cardRunSummary)
+        summaryBadge = findViewById(R.id.summaryBadge)
         tvSummaryTitle = findViewById(R.id.tvSummaryTitle)
         tvSummaryMileage = findViewById(R.id.tvSummaryMileage)
         tvSummaryDetails = findViewById(R.id.tvSummaryDetails)
@@ -292,6 +294,7 @@ class MainActivity : AppCompatActivity() {
                 progressBar = progressBar,
                 circularProgress = circularProgress,
                 dashboardHalo = dashboardHalo,
+                summaryBadge = summaryBadge,
             ),
             appearanceConfig,
         )
@@ -1086,9 +1089,13 @@ class MainActivity : AppCompatActivity() {
         tvSummaryMileage.text = MileageFormatter.formatKm(mileage)
         tvSummaryMileage.setTextColor(getColor(if (danger) R.color.danger else R.color.primary))
         tvSummaryDetails.text = details
+        summaryBadge.setBadgeState(
+            if (danger) RunSummaryBadgeView.State.DANGER else RunSummaryBadgeView.State.SUCCESS,
+            animate = true,
+        )
         cardRunSummary.visibility = View.VISIBLE
         cardRunSummary.post {
-            animateAppear(cardRunSummary)
+            animateSummaryAppear()
         }
     }
 
@@ -1124,6 +1131,21 @@ class MainActivity : AppCompatActivity() {
             .translationY(0f)
             .setDuration(180L)
             .start()
+    }
+
+    private fun animateSummaryAppear() {
+        cardRunSummary.alpha = 0f
+        cardRunSummary.translationY = dp(10).toFloat()
+        cardRunSummary.scaleX = 0.985f
+        cardRunSummary.scaleY = 0.985f
+        cardRunSummary.animate()
+            .alpha(1f)
+            .translationY(0f)
+            .scaleX(1f)
+            .scaleY(1f)
+            .setDuration(260L)
+            .start()
+        motionController.pulseMetrics(tvSummaryMileage)
     }
 
     private fun pulseProgressMetrics() {
