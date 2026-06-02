@@ -81,6 +81,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var cardProgress: MaterialCardView
     private lateinit var tvStatus: TextView
     private lateinit var progressBar: ProgressBar
+    private lateinit var dashboardHalo: DashboardHaloView
     private lateinit var circularProgress: CircularProgressIndicator
     private lateinit var panelProgressMetric: LinearLayout
     private lateinit var panelFieldMetric: LinearLayout
@@ -113,6 +114,7 @@ class MainActivity : AppCompatActivity() {
     private var displayedMileage = 0.0
     private var mileageAnimator: ValueAnimator? = null
     private val milestoneTracker = ProgressMilestoneTracker()
+    private var fieldCardEntrancePlayed = false
     private val handler = Handler(Looper.getMainLooper())
     private var lastTerminalStatus: RunStatus? = null
     private val runStatusObserver = RunStatusObserver { status ->
@@ -138,7 +140,6 @@ class MainActivity : AppCompatActivity() {
         setupSpinner()
         setupListeners()
         restoreSavedOptions()
-        setupFieldCards()
         setupBackHandling()
         applyAppearance()
         setupMotion()
@@ -195,6 +196,7 @@ class MainActivity : AppCompatActivity() {
         cardProgress = findViewById(R.id.cardProgress)
         tvStatus = findViewById(R.id.tvStatus)
         progressBar = findViewById(R.id.progressBar)
+        dashboardHalo = findViewById(R.id.dashboardHalo)
         circularProgress = findViewById(R.id.circularProgress)
         panelProgressMetric = findViewById(R.id.panelProgressMetric)
         panelFieldMetric = findViewById(R.id.panelFieldMetric)
@@ -281,10 +283,11 @@ class MainActivity : AppCompatActivity() {
                 statusPill = tvStatusPill,
                 progressBar = progressBar,
                 circularProgress = circularProgress,
+                dashboardHalo = dashboardHalo,
             ),
             appearanceConfig,
         )
-        setupFieldCards()
+        setupFieldCards(animateEntrance = !fieldCardEntrancePlayed)
     }
 
     private fun applyEdgeToEdgeInsets() {
@@ -336,7 +339,7 @@ class MainActivity : AppCompatActivity() {
             .show()
     }
 
-    private fun setupFieldCards() {
+    private fun setupFieldCards(animateEntrance: Boolean) {
         groupFieldCards.removeAllViews()
         val preset = AppearancePresetCatalog.find(appearanceConfig.presetId)
         FieldCatalog.options.forEachIndexed { index, option ->
@@ -345,6 +348,16 @@ class MainActivity : AppCompatActivity() {
             groupFieldCards.addView(card)
         }
         updateSelectedFieldViews(animate = false)
+        if (animateEntrance) {
+            groupFieldCards.post {
+                motionController.playEntrance(groupFieldCards.childrenList())
+                groupFieldCards.childrenList()
+                    .getOrNull(selectedFieldIndex)
+                    ?.findFieldTrackView()
+                    ?.playReveal()
+            }
+            fieldCardEntrancePlayed = true
+        }
     }
 
     private fun createFieldCard(
@@ -464,6 +477,10 @@ class MainActivity : AppCompatActivity() {
         tvFieldName.text = shortFieldName(fieldName)
         if (animate) {
             groupFieldCards.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+            groupFieldCards.childrenList()
+                .getOrNull(selectedFieldIndex)
+                ?.findFieldTrackView()
+                ?.playReveal()
         }
     }
 
@@ -847,6 +864,7 @@ class MainActivity : AppCompatActivity() {
                 btnStart.isEnabled = loggedInOpenID != null
                 btnEditOpenId.isEnabled = true
                 btnStop.isEnabled = false
+                dashboardHalo.setHaloState(progressBar.progress, active = false)
                 updateStatusPill(if (loggedInOpenID == null) "未登录" else "待开始", getColor(R.color.primary))
             }
 
@@ -862,6 +880,7 @@ class MainActivity : AppCompatActivity() {
                 lastRunningFieldName = status.fieldName
                 tvFieldName.text = shortFieldName(status.fieldName)
                 tvPaceMetric.text = "${etPace.text} min"
+                dashboardHalo.setHaloState(progressBar.progress, active = true)
                 lastTerminalStatus = null
             }
 
@@ -873,6 +892,7 @@ class MainActivity : AppCompatActivity() {
                 setStatusText("跑步中...", R.color.success, "跑步中")
                 motionController.animateProgress(progressBar, percent)
                 motionController.animateProgress(circularProgress, percent)
+                dashboardHalo.setHaloState(percent, active = true)
                 tvProgress.text = "$percent%"
                 animateMileage(status.mileage)
                 tvPoints.text = "${status.submitted}/${status.total}"
@@ -897,6 +917,7 @@ class MainActivity : AppCompatActivity() {
                 setStatusText("跑步完成!", R.color.success, "完成")
                 motionController.animateProgress(progressBar, 100)
                 motionController.animateProgress(circularProgress, 100)
+                dashboardHalo.setHaloState(100, active = false)
                 motionController.playProgressSheen(progressSheen)
                 tvProgress.text = "100%"
                 animateMileage(status.mileage)
@@ -918,6 +939,7 @@ class MainActivity : AppCompatActivity() {
                 showProgressCard()
                 motionController.setStatusPulse(tvStatusPill, false)
                 setStatusText("失败: ${status.message}", R.color.danger, "失败")
+                dashboardHalo.setHaloState(progressBar.progress, active = false, danger = true)
                 showRunSummary(
                     title = "跑步失败",
                     mileage = displayedMileage,
@@ -936,6 +958,7 @@ class MainActivity : AppCompatActivity() {
                 showProgressCard()
                 motionController.setStatusPulse(tvStatusPill, false)
                 setStatusText(status.message, R.color.danger, "已停止")
+                dashboardHalo.setHaloState(progressBar.progress, active = false, danger = true)
                 showRunSummary(
                     title = "已停止",
                     mileage = displayedMileage,
@@ -1019,6 +1042,7 @@ class MainActivity : AppCompatActivity() {
         displayedMileage = 0.0
         progressBar.progress = 0
         circularProgress.progress = 0
+        dashboardHalo.setHaloState(0, active = true)
         tvProgress.text = "0%"
         tvMileage.text = MileageFormatter.formatKmValue(0.0)
         tvPoints.text = "0/0"
@@ -1104,6 +1128,22 @@ class MainActivity : AppCompatActivity() {
 
     private fun LinearLayout.childrenList(): List<View> {
         return List(childCount) { index -> getChildAt(index) }
+    }
+
+    private fun View.findFieldTrackView(): FieldTrackView? {
+        if (this is FieldTrackView) {
+            return this
+        }
+        if (this !is ViewGroup) {
+            return null
+        }
+        for (index in 0 until childCount) {
+            val match = getChildAt(index).findFieldTrackView()
+            if (match != null) {
+                return match
+            }
+        }
+        return null
     }
 
     private inline fun ValueAnimator.doOnEnd(crossinline action: () -> Unit) {

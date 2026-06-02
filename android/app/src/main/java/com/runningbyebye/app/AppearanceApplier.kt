@@ -36,6 +36,7 @@ data class AppearanceTargets(
     val statusPill: TextView,
     val progressBar: ProgressBar,
     val circularProgress: CircularProgressIndicator,
+    val dashboardHalo: DashboardHaloView,
 )
 
 class AppearanceApplier(
@@ -250,6 +251,11 @@ class AppearanceApplier(
         targets.progressBar.progressBackgroundTintList = ColorStateList.valueOf(withAlpha(preset.accent, 48))
         targets.circularProgress.setIndicatorColor(preset.accent)
         targets.circularProgress.trackColor = withAlpha(preset.accent, 48)
+        targets.dashboardHalo.setPalette(
+            accent = preset.accent,
+            track = withAlpha(preset.accent, 48),
+            danger = context.getColor(R.color.danger),
+        )
     }
 
     private fun surfaceColor(config: AppearanceConfig): Int {

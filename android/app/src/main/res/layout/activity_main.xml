@@ -436,6 +436,12 @@
                             android:layout_height="132dp"
                             android:layout_marginEnd="12dp">
 
+                            <com.runningbyebye.app.DashboardHaloView
+                                android:id="@+id/dashboardHalo"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:layout_gravity="center" />
+
                             <com.google.android.material.progressindicator.CircularProgressIndicator
                                 android:id="@+id/circularProgress"
                                 android:layout_width="match_parent"

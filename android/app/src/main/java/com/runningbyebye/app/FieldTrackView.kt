@@ -1,21 +1,26 @@
 package com.runningbyebye.app
 
+import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Path
+import android.graphics.PathMeasure
 import android.graphics.RectF
+import android.os.Build
 import android.util.AttributeSet
 import android.view.View
+import android.view.animation.AccelerateDecelerateInterpolator
 import kotlin.math.max
-import kotlin.math.min
 
 class FieldTrackView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
 ) : View(context, attrs) {
     private val path = Path()
+    private val revealPath = Path()
+    private val pathMeasure = PathMeasure()
     private val bounds = RectF()
     private val trackPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
@@ -34,12 +39,40 @@ class FieldTrackView @JvmOverloads constructor(
 
     private var points: List<FieldPoint> = emptyList()
     private var accentColor: Int = Color.WHITE
+    private var revealProgress = 1f
+    private var revealAnimator: ValueAnimator? = null
 
     fun setTrack(points: List<FieldPoint>, accentColor: Int) {
         this.points = points
         this.accentColor = accentColor
         trackPaint.color = accentColor
+        revealProgress = 1f
         invalidate()
+    }
+
+    fun playReveal() {
+        revealAnimator?.cancel()
+        if (!animationsEnabled()) {
+            revealProgress = 1f
+            invalidate()
+            return
+        }
+        revealProgress = 0f
+        revealAnimator = ValueAnimator.ofFloat(0f, 1f).apply {
+            duration = 680L
+            interpolator = AccelerateDecelerateInterpolator()
+            addUpdateListener {
+                revealProgress = it.animatedValue as Float
+                invalidate()
+            }
+            start()
+        }
+    }
+
+    override fun onDetachedFromWindow() {
+        revealAnimator?.cancel()
+        revealAnimator = null
+        super.onDetachedFromWindow()
     }
 
     override fun onDraw(canvas: Canvas) {
@@ -49,8 +82,9 @@ class FieldTrackView @JvmOverloads constructor(
             return
         }
         rebuildPath()
-        canvas.drawPath(path, glowPaint)
-        canvas.drawPath(path, trackPaint)
+        val drawPath = revealedPath()
+        canvas.drawPath(drawPath, glowPaint)
+        canvas.drawPath(drawPath, trackPaint)
     }
 
     private fun drawEmptyTrack(canvas: Canvas) {
@@ -87,6 +121,20 @@ class FieldTrackView @JvmOverloads constructor(
                 path.lineTo(x, y)
             }
         }
+    }
+
+    private fun revealedPath(): Path {
+        if (revealProgress >= 0.995f) {
+            return path
+        }
+        revealPath.reset()
+        pathMeasure.setPath(path, false)
+        pathMeasure.getSegment(0f, pathMeasure.length * revealProgress.coerceIn(0f, 1f), revealPath, true)
+        return revealPath
+    }
+
+    private fun animationsEnabled(): Boolean {
+        return Build.VERSION.SDK_INT < Build.VERSION_CODES.O || ValueAnimator.areAnimatorsEnabled()
     }
 
     private fun Context.dp(value: Float): Float {
