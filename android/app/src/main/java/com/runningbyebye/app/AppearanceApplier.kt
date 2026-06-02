@@ -20,6 +20,7 @@ import androidx.core.view.WindowInsetsControllerCompat
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.progressindicator.CircularProgressIndicator
+import com.google.android.material.textfield.TextInputLayout
 
 data class AppearanceTargets(
     val root: View,
@@ -30,6 +31,7 @@ data class AppearanceTargets(
     val appearanceButton: ImageButton,
     val cards: List<MaterialCardView>,
     val glassPanels: List<View>,
+    val inputLayouts: List<TextInputLayout>,
     val primaryButtons: List<MaterialButton>,
     val secondaryButtons: List<MaterialButton>,
     val dangerButtons: List<MaterialButton>,
@@ -218,6 +220,31 @@ class AppearanceApplier(
         targets.glassPanels.forEach { panel ->
             panel.background = roundedGlassSurface(surfaceColor, strokeColor, preset, 8)
             panel.elevation = context.dp(1).toFloat()
+        }
+
+        val inputStroke = ColorStateList(
+            arrayOf(
+                intArrayOf(android.R.attr.state_focused),
+                intArrayOf(-android.R.attr.state_enabled),
+                intArrayOf(),
+            ),
+            intArrayOf(
+                withAlpha(preset.accent, 232),
+                withAlpha(textColor, 70),
+                withAlpha(if (isNightMode()) Color.WHITE else preset.accent, 112),
+            ),
+        )
+        targets.inputLayouts.forEach { input ->
+            input.boxBackgroundColor = withAlpha(surfaceBaseColor(), if (isNightMode()) 38 else 118)
+            input.setBoxStrokeColorStateList(inputStroke)
+            input.defaultHintTextColor = ColorStateList.valueOf(withAlpha(textColor, 148))
+            input.hintTextColor = ColorStateList.valueOf(preset.accent)
+            input.setBoxCornerRadii(
+                context.dp(8).toFloat(),
+                context.dp(8).toFloat(),
+                context.dp(8).toFloat(),
+                context.dp(8).toFloat(),
+            )
         }
 
         targets.primaryButtons.forEach { button ->

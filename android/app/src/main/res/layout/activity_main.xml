@@ -117,7 +117,7 @@
                         android:foreground="?attr/selectableItemBackgroundBorderless"
                         android:padding="8dp"
                         android:scaleType="center"
-                        android:src="@android:drawable/ic_menu_manage"
+                        android:src="@drawable/ic_glass_settings"
                         android:tint="@color/text_primary" />
                 </LinearLayout>
             </LinearLayout>
@@ -156,6 +156,7 @@
                     android:orientation="vertical">
 
                     <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/tilOpenID"
                         style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -181,7 +182,7 @@
                         android:text="登录"
                         android:textSize="15sp"
                         app:cornerRadius="8dp"
-                        app:icon="@android:drawable/ic_menu_myplaces"
+                        app:icon="@drawable/ic_login_user"
                         app:iconGravity="textStart"
                         app:iconPadding="8dp" />
                 </LinearLayout>
@@ -300,6 +301,7 @@
                     android:orientation="horizontal">
 
                     <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/tilPace"
                         style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
@@ -322,6 +324,7 @@
                     </com.google.android.material.textfield.TextInputLayout>
 
                     <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/tilInterval"
                         style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
@@ -363,7 +366,7 @@
                 android:text="开始跑步"
                 android:textSize="15sp"
                 app:cornerRadius="8dp"
-                app:icon="@android:drawable/ic_media_play"
+                app:icon="@drawable/ic_run_play"
                 app:iconGravity="textStart"
                 app:iconPadding="8dp" />
 
@@ -378,7 +381,7 @@
                 android:text="停止"
                 android:textSize="15sp"
                 app:cornerRadius="8dp"
-                app:icon="@android:drawable/ic_media_pause"
+                app:icon="@drawable/ic_run_stop"
                 app:iconGravity="textStart"
                 app:iconPadding="8dp" />
             </LinearLayout>

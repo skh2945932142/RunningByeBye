@@ -45,6 +45,7 @@ import com.google.android.material.card.MaterialCardView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.progressindicator.CircularProgressIndicator
 import com.google.android.material.textfield.TextInputEditText
+import com.google.android.material.textfield.TextInputLayout
 import org.json.JSONObject
 import java.io.File
 import java.text.SimpleDateFormat
@@ -63,12 +64,15 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tvAppTitle: TextView
     private lateinit var btnAppearance: ImageButton
     private lateinit var groupOpenIdInput: LinearLayout
+    private lateinit var tilOpenID: TextInputLayout
     private lateinit var etOpenID: TextInputEditText
     private lateinit var btnLogin: MaterialButton
     private lateinit var btnEditOpenId: MaterialButton
     private lateinit var groupFieldCards: LinearLayout
     private lateinit var spinnerField: Spinner
+    private lateinit var tilPace: TextInputLayout
     private lateinit var etPace: TextInputEditText
+    private lateinit var tilInterval: TextInputLayout
     private lateinit var etInterval: TextInputEditText
     private lateinit var btnStart: MaterialButton
     private lateinit var btnStop: MaterialButton
@@ -178,12 +182,15 @@ class MainActivity : AppCompatActivity() {
         tvAppTitle = findViewById(R.id.tvAppTitle)
         btnAppearance = findViewById(R.id.btnAppearance)
         groupOpenIdInput = findViewById(R.id.groupOpenIdInput)
+        tilOpenID = findViewById(R.id.tilOpenID)
         etOpenID = findViewById(R.id.etOpenID)
         btnLogin = findViewById(R.id.btnLogin)
         btnEditOpenId = findViewById(R.id.btnEditOpenId)
         groupFieldCards = findViewById(R.id.groupFieldCards)
         spinnerField = findViewById(R.id.spinnerField)
+        tilPace = findViewById(R.id.tilPace)
         etPace = findViewById(R.id.etPace)
+        tilInterval = findViewById(R.id.tilInterval)
         etInterval = findViewById(R.id.etInterval)
         btnStart = findViewById(R.id.btnStart)
         btnStop = findViewById(R.id.btnStop)
@@ -277,6 +284,7 @@ class MainActivity : AppCompatActivity() {
                     panelPaceMetric,
                     cardRunSummary,
                 ),
+                inputLayouts = listOf(tilOpenID, tilPace, tilInterval),
                 primaryButtons = listOf(btnLogin, btnStart),
                 secondaryButtons = listOf(btnEditOpenId),
                 dangerButtons = listOf(btnStop),
