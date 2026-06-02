@@ -643,28 +643,19 @@ class MainActivity : AppCompatActivity() {
         group.removeAllViews()
         AppearancePresetCatalog.all().forEach { preset ->
             val selected = appearanceConfig.customBackgroundUri.isBlank() && appearanceConfig.presetId == preset.id
-            val button = MaterialButton(this).apply {
-                text = preset.title
-                isAllCaps = false
-                gravity = Gravity.CENTER
-                textAlignment = View.TEXT_ALIGNMENT_CENTER
-                maxLines = 1
-                minHeight = dp(52)
-                setPadding(dp(12), 0, dp(12), 0)
-                backgroundTintList = ColorStateList.valueOf(
-                    withAlpha(preset.surfaceTint, if (selected) 116 else 58),
-                )
-                strokeColor = ColorStateList.valueOf(
-                    withAlpha(preset.accent, if (selected) 230 else 104),
-                )
-                strokeWidth = dp(if (selected) 2 else 1)
-                setTextColor(ContextCompat.getColor(this@MainActivity, R.color.text_primary))
-                setOnClickListener { onPresetSelected(preset) }
+            val button = AppearancePresetCardView(this).apply {
+                bind(preset, selected)
+                isClickable = true
+                isFocusable = true
+                setOnClickListener {
+                    performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+                    onPresetSelected(preset)
+                }
             }
             motionController.bindPressFeedback(GlassMotionController.PressFeedbackStyle.PANEL, button)
             val params = GridLayout.LayoutParams().apply {
                 width = 0
-                height = ViewGroup.LayoutParams.WRAP_CONTENT
+                height = dp(76)
                 columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f)
                 setMargins(0, 0, dp(8), dp(8))
             }
